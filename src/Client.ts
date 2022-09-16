@@ -4,8 +4,10 @@ import { EventEmitter } from "events";
 export class Client extends EventEmitter {
   /** The cleaned up version of the provided configurations for the client. */
   options: ParsedClientOptions;
+  /** The token used for this client. */
+  token: string;
 
-  constructor(options: ClientOptions) {
+  constructor(token: string, options: ClientOptions) {
     super();
 
     this.options = {
@@ -17,6 +19,7 @@ export class Client extends EventEmitter {
       proxyRestAuthorization: options.proxyRestAuthorization,
       applicationId: options.applicationId,
     };
+    this.token = token;
   }
 
   /** Converts the easy to type allowed mentions to the format discord requires. */
