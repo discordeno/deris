@@ -1,13 +1,55 @@
-import { DiscordAllowedMentions } from "discordeno/types";
+import { AllowedMentionsTypes, DiscordAllowedMentions } from "discordeno/types";
 import { EventEmitter } from "events";
 
 export class Client extends EventEmitter {
-  /** The options this client */
-  options: ClientOptions;
+  /** The cleaned up version of the provided configurations for the client. */
+  options: ParsedClientOptions;
 
   constructor(options: ClientOptions) {
     super();
-    this.options = options;
+
+    this.options = {
+      apiVersion: options.apiVersion ?? 10,
+      allowedMentions: this._formatAllowedMentions(options.allowedMentions),
+      defaultImageFormat: options.defaultImageFormat ?? "png",
+      defaultImageSize: options.defaultImageSize ?? 128,
+      proxyURL: options.proxyURL,
+      proxyRestAuthorization: options.proxyRestAuthorization,
+      applicationId: options.applicationId,
+    };
+  }
+
+  /** Converts the easy to type allowed mentions to the format discord requires. */
+  _formatAllowedMentions(allowed?: AllowedMentions): DiscordAllowedMentions {
+    if (!allowed) {
+      return this.options.allowedMentions;
+    }
+    const result: DiscordAllowedMentions = {};
+    result.parse = [];
+
+    if (allowed.everyone) {
+      result.parse.push(AllowedMentionsTypes.EveryoneMentions);
+    }
+    if (allowed.roles === true) {
+      result.parse.push(AllowedMentionsTypes.RoleMentions);
+    } else if (Array.isArray(allowed.roles)) {
+      if (allowed.roles.length > 100) {
+        throw new Error("Allowed role mentions cannot exceed 100.");
+      }
+      result.roles = allowed.roles;
+    }
+    if (allowed.users === true) {
+      result.parse.push(AllowedMentionsTypes.UserMentions);
+    } else if (Array.isArray(allowed.users)) {
+      if (allowed.users.length > 100) {
+        throw new Error("Allowed user mentions cannot exceed 100.");
+      }
+      result.users = allowed.users;
+    }
+    if (allowed.repliedUser !== undefined) {
+      result.replied_user = allowed.repliedUser;
+    }
+    return result;
   }
 }
 
