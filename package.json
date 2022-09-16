@@ -1,0 +1,27 @@
+{
+  "name": "school",
+  "version": "0.0.1",
+  "description": "Eris like framework for discordeno",
+  "main": "index.js",
+  "scripts": {
+    "tsc": "tsc --init"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/discordeno/deris.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache License 2.0",
+  "bugs": {
+    "url": "https://github.com/discordeno/deris/issues"
+  },
+  "homepage": "https://github.com/discordeno/deris#readme",
+  "dependencies": {
+    "discordeno": "^15.0.3",
+    "typescript": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.18"
+  }
+}
