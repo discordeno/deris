@@ -25,8 +25,38 @@ export class Client extends EventEmitter {
   }
 
   /** The amount of time in milliseconds that this client has been online for. */
-  get uptime() {
+  get uptime(): number {
     return Date.now() - this.startTime;
+  }
+
+  /** The api version to use. */
+  get apiVersion(): ApiVersions {
+    return this.options.apiVersion;
+  }
+
+  /** Change the api version when making requests. */
+  set apiVersion(version: ApiVersions) {
+    this.options.apiVersion = version;
+  }
+
+  /** The base url that will be used when making requests for discord api. */
+  get BASE_URL(): string {
+    return `/api/v${this.apiVersion}`;
+  }
+
+  /** The url to the REST proxy to send requests to. */
+  get proxyURL(): string {
+    return this.options.proxyURL;
+  }
+
+  /** The password/authorization to confirm that these request made to your rest proxy are indeed from you and not a hacker. */
+  get proxyRestAuthorization(): string {
+    return this.options.proxyRestAuthorization;
+  }
+
+  /** The application id(NOT the bot id). The bot id and application id are the same for newer bots but older bots have different ids. */
+  get applicationId(): BigString {
+    return this.options.applicationId;
   }
 
   /** Converts the easy to type allowed mentions to the format discord requires. */
