@@ -59,6 +59,94 @@ export class Client extends EventEmitter {
     return this.options.applicationId;
   }
 
+  /** Make a request to the discord api. */
+  async makeRequest(data: RequestData) {
+    return await fetch(`${this.proxyURL}/${this.BASE_URL}/${data.url}`, {
+      method: data.method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: this.proxyRestAuthorization,
+        "X-Audit-Log-Reason": data.reason ?? "",
+        ...(data.headers ?? {}),
+      },
+      body: data.body ? JSON.stringify(data.body) : undefined,
+    })
+      .then((res) => res.json())
+      .catch((error) => {
+        console.log(error);
+        return null;
+      });
+  }
+
+  /** Make a GET request to the discord api. */
+  async get(url: string) {
+    return await this.makeRequest({
+      method: "GET",
+      url,
+    });
+  }
+
+  /** Make a POST request to the discord api. */
+  async post(
+    url: string,
+    payload?: {
+      body?: Record<string, unknown>;
+      reason?: string;
+      file?: FileContent | FileContent[];
+    }
+  ) {
+    return await this.makeRequest({
+      method: "POST",
+      url,
+      body: payload?.body,
+      reason: payload?.reason,
+      file: payload?.file,
+    });
+  }
+
+  /** Make a PATCH request to the discord api. */
+  async patch(
+    url: string,
+    payload?: {
+      body?: Record<string, unknown> | null | string | any[];
+      reason?: string;
+      file?: FileContent | FileContent[];
+    }
+  ) {
+    return await this.makeRequest({
+      method: "PATCH",
+      url,
+      body: payload?.body,
+      reason: payload?.reason,
+      file: payload?.file,
+    });
+  }
+
+  /** Make a PUT request to the discord api. */
+  async put(
+    url: string,
+    payload?: {
+      body?: Record<string, string | number> | any[];
+      reason?: string;
+    }
+  ) {
+    return await this.makeRequest({
+      method: "PUT",
+      url,
+      body: payload?.body,
+      reason: payload?.reason,
+    });
+  }
+
+  /** Make a DELETE request to the discord api. */
+  async delete(url: string, payload?: { reason?: string }) {
+    return await this.makeRequest({
+      method: "DELETE",
+      url,
+      reason: payload?.reason,
+    });
+  }
+
   /** Converts the easy to type allowed mentions to the format discord requires. */
   _formatAllowedMentions(allowed?: AllowedMentions): DiscordAllowedMentions {
     if (!allowed) {
