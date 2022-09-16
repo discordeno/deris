@@ -1,3 +1,4 @@
+import { delay, getBotIdFromToken, iconBigintToHash, iconHashToBigInt } from "discordeno";
 import {
   AllowedMentionsTypes,
   ChannelTypes,
@@ -8,6 +9,7 @@ import {
   DiscordGuild,
   DiscordIntegration,
   DiscordInvite,
+  DiscordMember,
   DiscordMemberWithUser,
   DiscordMessage,
   DiscordRole,
@@ -18,6 +20,8 @@ import {
   OverwriteTypes,
 } from "discordeno/types";
 import { EventEmitter } from "events";
+import { Base } from "./Base.js";
+import Collection from "./Collection.js";
 
 import {
   CHANNEL,
@@ -104,9 +108,35 @@ import {
   WEBHOOK_TOKEN,
   WEBHOOK_TOKEN_SLACK,
 } from "./Endpoints.js";
+import CategoryChannel from "./Structures/CategoryChannel.js";
+import Channel from "./Structures/Channel.js";
+import ExtendedUser from "./Structures/ExtendedUser.js";
+import Guild from "./Structures/Guild.js";
+import GuildAuditLogEntry from "./Structures/GuildAuditLogEntry.js";
+import GuildIntegration from "./Structures/GuildIntegration.js";
+import GuildPreview from "./Structures/GuildPreview.js";
+import GuildTemplate from "./Structures/GuildTemplate.js";
+import Invite from "./Structures/Invite.js";
+import Member from "./Structures/Member.js";
+import Message from "./Structures/Message.js";
+import NewsChannel from "./Structures/NewsChannel.js";
+import NewsThreadChannel from "./Structures/NewsThreadChannel.js";
+import Permission from "./Structures/Permission.js";
+import { PrivateChannel } from "./Structures/PrivateChannel.js";
+import PrivateThreadChannel from "./Structures/PrivateThreadChannel.js";
+import PublicThreadChannel from "./Structures/PublicThreadChannel.js";
+import Role from "./Structures/Role.js";
+import StageChannel from "./Structures/StageChannel.js";
+import StageInstance from "./Structures/StageInstance.js";
+import TextChannel from "./Structures/TextChannel.js";
+import TextVoiceChannel from "./Structures/TextVoiceChannel.js";
+import ThreadMember from "./Structures/ThreadMember.js";
+import User from "./Structures/User.js";
 import {
+  AllowedMentions,
   AnyChannel,
   AnyGuildChannel,
+  ApplicationCommand,
   ApplicationCommandPermissions,
   ApplicationCommandStructure,
   ChannelFollow,
@@ -124,7 +154,9 @@ import {
   EditChannelOptions,
   EditChannelPositionOptions,
   EditStickerOptions,
+  Emoji,
   EmojiOptions,
+  FileContent,
   GetArchivedThreadsOptions,
   GetGuildAuditLogOptions,
   GetGuildBansOptions,
@@ -151,10 +183,14 @@ import {
   PurgeChannelOptions,
   RoleOptions,
   StageInstanceOptions,
+  Sticker,
+  StickerPack,
   VoiceRegion,
   VoiceStateOptions,
+  Webhook,
   WebhookOptions,
   WebhookPayload,
+  WelcomeScreen,
   WelcomeScreenOptions,
   Widget,
   WidgetData,
@@ -171,6 +207,13 @@ export class Client extends EventEmitter {
   CDN_URL = "https://cdn.discordapp.com";
   CLIENT_URL = "https://discord.com";
 
+  guilds = new Collection<BigString, Guild>();
+  users = new Collection<BigString, User>();
+  _channelGuildMap = new Collection<BigString, BigString>();
+  _threadGuildMap = new Collection<BigString, BigString>();
+  _privateChannelMap = new Collection<BigString, BigString>();
+  privateChannels = new Collection<BigString, PrivateChannel>();
+
   constructor(token: string, options: ClientOptions) {
     super();
 
@@ -182,6 +225,7 @@ export class Client extends EventEmitter {
       proxyURL: options.proxyURL,
       proxyRestAuthorization: options.proxyRestAuthorization,
       applicationId: options.applicationId,
+      messageLimit: options.messageLimit,
     };
     this.token = token;
   }
@@ -219,6 +263,22 @@ export class Client extends EventEmitter {
   /** The application id(NOT the bot id). The bot id and application id are the same for newer bots but older bots have different ids. */
   get applicationId(): BigString {
     return this.options.applicationId;
+  }
+
+  get id(): BigString {
+    return getBotIdFromToken(this.token);
+  }
+
+  get channelGuildMap(): Record<string, BigString> {
+    return this._channelGuildMap.toRecord();
+  }
+
+  get threadGuildMap(): Record<string, BigString> {
+    return this._threadGuildMap.toRecord();
+  }
+
+  get privateChannelMap(): Record<string, BigString> {
+    return this._privateChannelMap.toRecord();
   }
 
   /** Make a request to the discord api. */
@@ -434,7 +494,7 @@ export class Client extends EventEmitter {
   async createChannel(
     guildID: BigString,
     name: string,
-    type: ChannelTypes.GuildNews,
+    type: ChannelTypes.GuildAnnouncement,
     options?: CreateChannelOptions
   ): Promise<NewsChannel>;
   async createChannel(
@@ -2051,7 +2111,7 @@ export class Client extends EventEmitter {
     return messages.map((message: DiscordMessage) => {
       try {
         return new Message(message, this);
-      } catch (err) {
+      } catch (err: any) {
         this.emit(
           "error",
           `Error creating message from channel messages\n${
@@ -2681,17 +2741,8 @@ export interface ParsedClientOptions {
   proxyRestAuthorization: string;
   /** The application id(NOT the bot id). The bot id and application id are the same for newer bots but older bots have different ids. */
   applicationId: BigString;
-}
-
-export interface AllowedMentions {
-  /** Whether or not to allow mentioning @everyone */
-  everyone?: boolean;
-  /** Whether or not to allow mentioning the replied user. */
-  repliedUser?: boolean;
-  /** The roles to allow mentioning by default or enable all roles to be able to be mentioned by default. */
-  roles?: boolean | string[];
-  /** The users to allow mentioning by default or enable all users to be able to be mentioned by default. */
-  users?: boolean | string[];
+  /** The message limit you would like to set. */
+  messageLimit?: number;
 }
 
 // TODO: Switch bigstring to dd version in next dd release.
@@ -2719,11 +2770,4 @@ export interface RequestData {
   body?: Record<string, unknown> | string | null | any[];
   /** The file contents that should be sent in this request. */
   file?: FileContent | FileContent[];
-}
-
-export interface FileContent {
-  /** The file data. */
-  file: Buffer | string;
-  /** The name of the file, which must include the file suffix. */
-  name: string;
 }
