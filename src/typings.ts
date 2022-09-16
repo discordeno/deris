@@ -1354,9 +1354,13 @@ export interface AdvancedMessageContentEdit extends AdvancedMessageContent {
   file?: FileContent | FileContent[];
 }
 export interface AllowedMentions {
+  /** Whether or not to allow mentioning @everyone */
   everyone?: boolean;
+  /** Whether or not to allow mentioning the replied user. */
   repliedUser?: boolean;
+  /** The roles to allow mentioning by default or enable all roles to be able to be mentioned by default. */
   roles?: boolean | string[];
+  /** The users to allow mentioning by default or enable all users to be able to be mentioned by default. */
   users?: boolean | string[];
 }
 // export interface Attachment {
@@ -1422,7 +1426,9 @@ export interface InteractionButton extends ButtonBase {
 //   name: string;
 // }
 export interface FileContent {
+  /** The file data. */
   file: Buffer | string;
+  /** The name of the file, which must include the file suffix. */
   name: string;
 }
 // export interface MessageInteraction {
@@ -1560,9 +1566,9 @@ export interface CreateThreadWithoutMessageOptions {
   rateLimitPerUser?: number | null;
   reason?: string;
   type:
-    | ChannelTypes.GuildNewsThread
-    | ChannelTypes.GuildPublicThread
-    | ChannelTypes.GuildPrivateThread;
+    | ChannelTypes.AnnouncementThread
+    | ChannelTypes.PublicThread
+    | ChannelTypes.PrivateThread;
   invitable?: boolean;
 }
 export interface GetArchivedThreadsOptions {
