@@ -6,6 +6,8 @@ export class Client extends EventEmitter {
   options: ParsedClientOptions;
   /** The token used for this client. */
   token: string;
+  /** The timestamp in milliseconds when this client was created. */
+  startTime = Date.now();
 
   constructor(token: string, options: ClientOptions) {
     super();
@@ -20,6 +22,11 @@ export class Client extends EventEmitter {
       applicationId: options.applicationId,
     };
     this.token = token;
+  }
+
+  /** The amount of time in milliseconds that this client has been online for. */
+  get uptime() {
+    return Date.now() - this.startTime;
   }
 
   /** Converts the easy to type allowed mentions to the format discord requires. */
