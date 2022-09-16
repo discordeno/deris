@@ -1,6 +1,9 @@
 import { AllowedMentionsTypes, DiscordAllowedMentions } from "discordeno/types";
 import { EventEmitter } from "events";
 
+import { GUILD_DISCOVERY_CATEGORY } from "./Endpoints.js";
+import { DiscoverySubcategoryResponse } from "./typings.js";
+
 export class Client extends EventEmitter {
   /** The cleaned up version of the provided configurations for the client. */
   options: ParsedClientOptions;
@@ -144,6 +147,17 @@ export class Client extends EventEmitter {
       method: "DELETE",
       url,
       reason: payload?.reason,
+    });
+  }
+
+  /** Add a guild discovery subcategory */
+  async addGuildDiscoverySubcategory(
+    guildID: BigString,
+    categoryID: BigString,
+    reason?: string
+  ): Promise<DiscoverySubcategoryResponse> {
+    return await this.post(GUILD_DISCOVERY_CATEGORY(guildID, categoryID), {
+      reason,
     });
   }
 
