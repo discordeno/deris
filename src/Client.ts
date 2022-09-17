@@ -16,7 +16,6 @@ import {
   DiscordTemplate,
   DiscordThreadMember,
   DiscordUser,
-  InteractionResponse,
   OverwriteTypes,
 } from "discordeno/types";
 import { EventEmitter } from "events";
@@ -172,6 +171,7 @@ import {
   GuildTemplateOptions,
   GuildVanity,
   IntegrationOptions,
+  InteractionResponse,
   ListedChannelThreads,
   ListedGuildThreads,
   MemberOptions,

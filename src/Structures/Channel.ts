@@ -16,7 +16,7 @@ export class Channel extends Base {
   type: ChannelTypes;
   client: Client;
 
-  constructor(data: DiscordChannel, client: Client) {
+  constructor(data: DiscordChannel | Pick<DiscordChannel, "id" | "permissions" | "name" | "type">, client: Client) {
     super(data.id);
     this.type = data.type;
     this.client = client;
@@ -40,16 +40,16 @@ export class Channel extends Base {
       case ChannelTypes.GuildCategory: {
         return new CategoryChannel(data, client);
       }
-      case ChannelTypes.GuildNews: {
+      case ChannelTypes.GuildAnnouncement: {
         return new NewsChannel(data, client);
       }
-      case ChannelTypes.GuildNewsThread: {
+      case ChannelTypes.AnnouncementThread: {
         return new NewsThreadChannel(data, client);
       }
-      case ChannelTypes.GuildPublicThread: {
+      case ChannelTypes.PublicThread: {
         return new PublicThreadChannel(data, client);
       }
-      case ChannelTypes.GuildPrivateThread: {
+      case ChannelTypes.PrivateThread: {
         return new PrivateThreadChannel(data, client);
       }
       case ChannelTypes.GuildStageVoice: {
