@@ -1,4 +1,9 @@
-import { delay, getBotIdFromToken, iconBigintToHash, iconHashToBigInt } from "discordeno";
+import {
+  delay,
+  getBotIdFromToken,
+  iconBigintToHash,
+  iconHashToBigInt,
+} from "discordeno";
 import {
   AllowedMentionsTypes,
   ChannelTypes,
@@ -291,7 +296,17 @@ export class Client extends EventEmitter {
         "X-Audit-Log-Reason": data.reason ?? "",
         ...(data.headers ?? {}),
       },
-      body: data.body ? JSON.stringify(data.body) : undefined,
+      body: data.body
+        ? JSON.stringify(data.body, (str) => {
+            if (str.endsWith("ID"))
+              str = str.substring(0, str.length - 2) + "Id";
+
+            return str.replace(
+              /[A-Z]/g,
+              (letter) => `_${letter.toLowerCase()}`
+            );
+          })
+        : undefined,
     })
       .then((res) => res.json())
       .catch((error) => {
@@ -698,6 +713,14 @@ export class Client extends EventEmitter {
       {
         body: {
           ...options,
+          data: {
+            ...options.data,
+
+            allowed_mentions: options.data?.allowedMentions
+              ? this._formatAllowedMentions(options.data.allowedMentions)
+              : undefined,
+            allowedMentions: undefined,
+          },
         },
         file,
       }

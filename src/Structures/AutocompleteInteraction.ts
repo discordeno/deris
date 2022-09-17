@@ -21,8 +21,8 @@ export class AutocompleteInteraction extends Interaction {
   appPermissions?: Permission;
   /** The channel id where this interaction was created in. */
   channelID: BigString;
-  /** The user who triggered the interaction. Sent when used in a DM. */
-  user?: User;
+  /** The user who triggered the interaction. */
+  user: User;
   /** The data attached to this interaction. */
   data?: DiscordInteractionData;
   /** The member who triggered the interaction. Sent when used in a guild. */
@@ -43,10 +43,8 @@ export class AutocompleteInteraction extends Interaction {
       this.guild.members.update(this.member, this.guild);
     }
 
-    if (data.user !== undefined) {
-      const user = new User(data.user, client);
-      this.user = this.client.users.update(user, client);
-    }
+    this.user = new User(data.user ?? data.member!.user, this.client);
+    this.client.users.set(this.user.id, this.user);
 
     if (data.app_permissions !== undefined) {
       this.appPermissions = new Permission(data.app_permissions);
