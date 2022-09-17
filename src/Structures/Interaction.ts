@@ -26,6 +26,9 @@ export class Interaction extends Base {
         this.acknowledged = false;
     }
 
+    /**
+     * @deprecated Use `.client`
+     */
     get _client(): Client {
         return this.client;
     }
