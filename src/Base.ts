@@ -9,7 +9,7 @@ export class Base {
   }
 
   /** The snowflake id */
-  get id() {
+  get id(): string {
     return this._id.toString();
   }
 
