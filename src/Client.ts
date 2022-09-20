@@ -231,6 +231,7 @@ export class Client extends EventEmitter {
       proxyRestAuthorization: options.proxyRestAuthorization,
       applicationId: options.applicationId,
       messageLimit: options.messageLimit,
+      seedVoiceConnections: options.seedVoiceConnections ?? true,
     };
     this.token = token;
   }
@@ -700,8 +701,10 @@ export class Client extends EventEmitter {
     }).then((template) => new GuildTemplate(template, this));
   }
 
-  /** Respond to the interaction with a message
-   * Note: Use webhooks if you have already responded with an interaction response. */
+  /** 
+   * Respond to the interaction with a message
+   * Note: Use webhooks if you have already responded with an interaction response.
+   */
   async createInteractionResponse(
     interactionID: BigString,
     interactionToken: string,
@@ -1956,7 +1959,7 @@ export class Client extends EventEmitter {
   }
 
   /** Get all the webhooks in a guild */
-  async getGuildWebhooks(guildID: BigString): Promise<Webhook> {
+  async getGuildWebhooks(guildID: BigString): Promise<Webhook[]> {
     return await this.get(GUILD_WEBHOOKS(guildID));
   }
 
@@ -2486,7 +2489,7 @@ export class Client extends EventEmitter {
   }
 
   /** Remove a role from a guild member */
-  async getMessagesremoveGuildMemberRole(
+  async removeGuildMemberRole(
     guildID: BigString,
     memberID: BigString,
     roleID: BigString,

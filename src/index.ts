@@ -41,4 +41,5 @@ export * from "./Structures/ThreadChannel.js";
 export * from "./Structures/ThreadMember.js";
 export * from "./Structures/UnknownInteraction.js";
 export * from "./Structures/User.js";
+export * from "./Structures/VoiceState.js";
 
