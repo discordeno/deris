@@ -271,6 +271,11 @@ export class Client extends EventEmitter {
     return this.options.applicationId;
   }
 
+  /** Whether or not to seed voice connections. */
+  get seedVoiceConnections(): boolean {
+    return this.options.seedVoiceConnections;
+  }
+
   get id(): BigString {
     return getBotIdFromToken(this.token);
   }
@@ -2750,6 +2755,8 @@ export interface ClientOptions {
   proxyRestAuthorization: string;
   /** The application id(NOT the bot id). The bot id and application id are the same for newer bots but older bots have different ids. */
   applicationId: BigString;
+  /** Whether or not to seed voice connections. */
+  seedVoiceConnections: boolean;
 }
 
 export interface ParsedClientOptions {
@@ -2769,6 +2776,8 @@ export interface ParsedClientOptions {
   applicationId: BigString;
   /** The message limit you would like to set. */
   messageLimit?: number;
+  /** Whether or not to seed voice connections */
+  seedVoiceConnections: boolean;
 }
 
 // TODO: Switch bigstring to dd version in next dd release.
