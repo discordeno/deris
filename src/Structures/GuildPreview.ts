@@ -24,7 +24,6 @@ export class GuildPreview extends Base {
   _splash: bigint | null;
   /** The guild's discovery splash image url. */
   _discoverySplash: bigint | null;
-
   /** The guild's features. */
   _features: GuildToggles;
 
@@ -40,6 +39,8 @@ export class GuildPreview extends Base {
     this.approximateMemberCount = data.approximate_member_count;
     this.approximatePresenceCount = data.approximate_presence_count;
     this.emojis = data.emojis;
+    // TODO: make dd version accept a specific subset of discord guild here
+    // @ts-ignore this should not cause an issue
     this._features = new GuildToggles(data);
   }
 
@@ -83,7 +84,7 @@ export class GuildPreview extends Base {
   }
 
   get features(): string[] {
-    return this._features.features;
+    return this._features.features.map(feature => feature.replace(/([a-z])([A-Z])/, '$1_$2').toUpperCase());
   }
 
   /** Get the guild's splash with the given format and size */
