@@ -39,6 +39,8 @@ export class ThreadChannel extends GuildChannel {
     autoArchiveDuration: number;
     /** Whether the thread is locked. */
     locked: boolean;
+    /** Whether or not the thread is inviteable. */
+    invitable?: boolean;
   };
   /** The bot's thread member object if it has joined the thread. */
   member?: ThreadMember;
