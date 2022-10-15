@@ -1,9 +1,10 @@
 import { DiscordChannel } from "discordeno/types";
 import { Client } from "../Client.js";
+import Channel from "./Channel.js";
 
-export class PrivateChannel {
+export class PrivateChannel extends Channel {
     constructor(data: DiscordChannel, client: Client) {
-        
+        super(data, client);
     }
 }
 

@@ -1972,16 +1972,16 @@ export enum InviteTargetTypes {
 //     LISTEN: 3;
 //     JOIN_REQUEST: 5;
 //   };
-//   MessageFlags: {
-//     CROSSPOSTED: 1;
-//     IS_CROSSPOST: 2;
-//     SUPPRESS_EMBEDS: 4;
-//     SOURCE_MESSAGE_DELETED: 8;
-//     URGENT: 16;
-//     HAS_THREAD: 32;
-//     EPHEMERAL: 64;
-//     LOADING: 128;
-//   };
+export const MessageFlags = {
+  CROSSPOSTED: 1,
+  IS_CROSSPOST: 2,
+  SUPPRESS_EMBEDS: 4,
+  SOURCE_MESSAGE_DELETED: 8,
+  URGENT: 16,
+  HAS_THREAD: 32,
+  EPHEMERAL: 64,
+  LOADING: 128,
+};
 //   MessageTypes: {
 //     DEFAULT: 0;
 //     RECIPIENT_ADD: 1;
