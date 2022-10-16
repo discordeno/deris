@@ -2,7 +2,7 @@ import { DiscordVoiceState } from 'discordeno/types';
 import { Base } from '../Base.js';
 
 export class VoiceState extends Base {
-    channelID!: string | null;
+    channelID: string | null = null;
     deaf: boolean;
     mute: boolean;
     requestToSpeakTimestamp: number | null;
@@ -62,7 +62,7 @@ export class VoiceState extends Base {
         }
     }
 
-    toJSON(props = []) {
+    toJSON(props: string[] = []) {
         return super.toJSON(['channelID', 'deaf', 'mute', 'requestToSpeakTimestamp', 'selfDeaf', 'selfMute', 'selfStream', 'selfVideo', 'sessionID', 'suppress', ...props]);
     }
 }
