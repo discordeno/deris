@@ -18,6 +18,7 @@ import {
   WebhookTypes,
 } from "discordeno/types";
 import { BigString } from "./Client.js";
+import Collection from "./Collection.js";
 import CategoryChannel from "./Structures/CategoryChannel.js";
 import GuildAuditLogEntry from "./Structures/GuildAuditLogEntry.js";
 import GuildIntegration from "./Structures/GuildIntegration.js";
@@ -144,9 +145,9 @@ export type ApplicationCommandOptionsWithValue =
 // export type ApplicationCommandTypes = Constants["ApplicationCommandTypes"][keyof Constants["ApplicationCommandTypes"]];
 
 // // Cache
-// export interface Uncached {
-//   id: string;
-// }
+export interface Uncached {
+  id: string;
+}
 
 // // Channel
 export type AnyChannel = AnyGuildChannel | PrivateChannel;
@@ -163,13 +164,13 @@ export type AnyVoiceChannel = TextVoiceChannel | StageChannel;
 export type GuildTextableChannel = TextChannel | TextVoiceChannel | NewsChannel;
 // export type GuildTextableWithThread = GuildTextableChannel | AnyThreadChannel;
 // export type InviteChannel = InvitePartialChannel | Exclude<AnyGuildChannel, CategoryChannel | AnyThreadChannel>;
-// export type PossiblyUncachedTextable = Textable | Uncached;
+export type PossiblyUncachedTextable = Textable | Uncached;
 // export type PossiblyUncachedTextableChannel = TextableChannel | Uncached;
-// export type TextableChannel =
-//   | (GuildTextable & GuildTextableChannel)
-//   | (ThreadTextable & AnyThreadChannel)
-//   | (Textable & PrivateChannel);
-// export type VideoQualityMode = Constants["VideoQualityModes"][keyof Constants["VideoQualityModes"]];
+export type TextableChannel =
+  | (GuildTextable & GuildTextableChannel)
+  | (ThreadTextable & AnyThreadChannel)
+  | (Textable & PrivateChannel);
+export type VideoQualityMode = VideoQualityModes.Auto | VideoQualityModes.Full;
 // export type ChannelTypes = GuildChannelTypes | PrivateChannelTypes;
 // export type GuildChannelTypes = Exclude<Constants["ChannelTypes"][keyof Constants["ChannelTypes"]], PrivateChannelTypes>;
 // export type TextChannelTypes = GuildTextChannelTypes | PrivateChannelTypes;
@@ -183,8 +184,7 @@ export type GuildTextableChannel = TextChannel | TextVoiceChannel | NewsChannel;
 //   Constants["ChannelTypes"]["GUILD_PRIVATE_THREAD"]
 // >;
 // export type PrivateChannelTypes = Constants["ChannelTypes"][keyof Pick<Constants["ChannelTypes"], "DM" | "GROUP_DM">];
-// export type TextVoiceChannelTypes =
-//   Constants["ChannelTypes"][keyof Pick<Constants["ChannelTypes"], "GUILD_VOICE">];
+export type TextVoiceChannelTypes = ChannelTypes.GuildVoice | ChannelTypes.GuildStageVoice;
 
 // // Command
 // export type CommandGenerator = CommandGeneratorFunction | MessageContent | MessageContent[] | CommandGeneratorFunction[];
@@ -506,15 +506,15 @@ export interface GetMessagesOptions {
 //   lastPinTimestamp: number | null;
 //   topic?: string | null;
 // }
-// export interface GuildTextable extends Textable {
-//   rateLimitPerUser: number;
-//   createWebhook(options: { name: string; avatar?: string | null }, reason?: string): Promise<Webhook>;
-//   deleteMessages(messageIDs: string[], reason?: string): Promise<void>;
-//   getWebhooks(): Promise<Webhook[]>;
-//   purge(options: PurgeChannelOptions): Promise<number>;
-//   removeMessageReactionEmoji(messageID: string, reaction: string): Promise<void>;
-//   removeMessageReactions(messageID: string): Promise<void>;
-// }
+export interface GuildTextable extends Textable {
+  rateLimitPerUser: number;
+  createWebhook(options: { name: string; avatar?: string | null }, reason?: string): Promise<Webhook>;
+  deleteMessages(messageIDs: string[], reason?: string): Promise<void>;
+  getWebhooks(): Promise<Webhook[]>;
+  purge(options: PurgeChannelOptions): Promise<number>;
+  removeMessageReactionEmoji(messageID: string, reaction: string): Promise<void>;
+  removeMessageReactions(messageID: string): Promise<void>;
+}
 export interface PartialChannel {
   bitrate?: number;
   id: string;
@@ -527,11 +527,11 @@ export interface PartialChannel {
   type: number;
   user_limit?: number;
 }
-// export interface Pinnable {
-//   getPins(): Promise<Message[]>;
-//   pinMessage(messageID: string): Promise<void>;
-//   unpinMessage(messageID: string): Promise<void>;
-// }
+export interface Pinnable {
+  getPins(): Promise<Message[]>;
+  pinMessage(messageID: string): Promise<void>;
+  unpinMessage(messageID: string): Promise<void>;
+}
 export interface PurgeChannelOptions {
   after?: string;
   before?: string;
@@ -539,31 +539,31 @@ export interface PurgeChannelOptions {
   limit: number;
   reason?: string;
 }
-// export interface Textable {
-//   lastMessageID: string;
-//   messages: Collection<Message<this>>;
-//   addMessageReaction(messageID: string, reaction: string): Promise<void>;
-//   createMessage(content: MessageContent, file?: FileContent | FileContent[]): Promise<Message<this>>;
-//   deleteMessage(messageID: string, reason?: string): Promise<void>;
-//   editMessage(messageID: string, content: MessageContentEdit): Promise<Message<this>>;
-//   getMessage(messageID: string): Promise<Message<this>>;
-//   getMessageReaction(messageID: string, reaction: string, options?: GetMessageReactionOptions): Promise<User[]>;
-//   getMessages(options?: GetMessagesOptions): Promise<Message<this>[]>;
-//   removeMessageReaction(messageID: string, reaction: string, userID?: string): Promise<void>;
-//   sendTyping(): Promise<void>;
-//   unsendMessage(messageID: string): Promise<void>;
-// }
+export interface Textable {
+  lastMessageID: string;
+  messages: Collection<string, Message>;
+  addMessageReaction(messageID: string, reaction: string): Promise<void>;
+  createMessage(content: MessageContent, file?: FileContent | FileContent[]): Promise<Message>;
+  deleteMessage(messageID: string, reason?: string): Promise<void>;
+  editMessage(messageID: string, content: MessageContentEdit): Promise<Message>;
+  getMessage(messageID: string): Promise<Message>;
+  getMessageReaction(messageID: string, reaction: string, options?: GetMessageReactionOptions): Promise<User[]>;
+  getMessages(options?: GetMessagesOptions): Promise<Message[]>;
+  removeMessageReaction(messageID: string, reaction: string, userID?: string): Promise<void>;
+  sendTyping(): Promise<void>;
+  unsendMessage(messageID: string): Promise<void>;
+}
 // // @ts-ignore ts(2430) - ThreadTextable can't properly extend Textable because of getMessageReaction deprecated overload
-// export interface ThreadTextable extends Textable, Pinnable {
-//   lastPinTimestamp?: number;
-//   deleteMessages(messageIDs: string[], reason?: string): Promise<void>;
-//   getMembers(): Promise<ThreadMember[]>;
-//   join(userID: string): Promise<void>;
-//   leave(userID: string): Promise<void>;
-//   purge(options: PurgeChannelOptions): Promise<number>;
-//   removeMessageReactionEmoji(messageID: string, reaction: string): Promise<void>;
-//   removeMessageReactions(messageID: string): Promise<void>;
-// }
+export interface ThreadTextable extends Textable, Pinnable {
+  lastPinTimestamp?: number;
+  deleteMessages(messageIDs: string[], reason?: string): Promise<void>;
+  getMembers(): Promise<ThreadMember[]>;
+  join(userID: string): Promise<void>;
+  leave(userID: string): Promise<void>;
+  purge(options: PurgeChannelOptions): Promise<number>;
+  removeMessageReactionEmoji(messageID: string, reaction: string): Promise<void>;
+  removeMessageReactions(messageID: string): Promise<void>;
+}
 // export interface WebhookData {
 //   channelID: string;
 //   guildID: string;
@@ -1597,12 +1597,12 @@ export interface ListedGuildThreads<
 // }
 
 // // Voice
-// export interface JoinVoiceChannelOptions {
-//   opusOnly?: boolean;
-//   selfDeaf?: boolean;
-//   selfMute?: boolean;
-//   shared?: boolean;
-// }
+export interface JoinVoiceChannelOptions {
+  opusOnly?: boolean;
+  selfDeaf?: boolean;
+  selfMute?: boolean;
+  shared?: boolean;
+}
 export interface StageInstanceOptions {
   privacyLevel?: ScheduledEventPrivacyLevel;
   topic?: string;

@@ -11,6 +11,7 @@ import {
   DiscordMemberWithUser,
   DiscordSticker,
   ExplicitContentFilterLevels,
+  GuildFeatures,
   GuildNsfwLevel,
   MfaLevels,
   PremiumTiers,
@@ -27,6 +28,7 @@ import {
   GUILD_DISCOVERY_SPLASH,
 } from "../Endpoints.js";
 import {
+  AnyGuildChannel,
   AnyThreadChannel,
   ApplicationCommand,
   ApplicationCommandPermissions,
@@ -79,6 +81,7 @@ import TextChannel from "./TextChannel.js";
 import TextVoiceChannel from "./TextVoiceChannel.js";
 import ThreadChannel from "./ThreadChannel.js";
 import User from "./User.js";
+import VoiceChannel from "./VoiceChannel.js";
 import { VoiceState } from "./VoiceState.js";
 
 export class Guild extends Base {
@@ -114,6 +117,8 @@ export class Guild extends Base {
   defaultNotifications?: DefaultMessageNotificationLevels;
   /** The explicit content filter setting for this guild. */
   explicitContentFilter?: ExplicitContentFilterLevels;
+  /** Array of guild features */
+  features: GuildFeatures[] = [];
   /** The premium tier of the guild. */
   premiumTier?: PremiumTiers;
   /** The MFA level of the guild. */
@@ -272,8 +277,8 @@ export class Guild extends Base {
           this.client.users.set(user.id, user);
 
           // TODO: check channel type maybe voice channel?
-          this.channels
-            .get(voiceState.channel_id!)
+          (this.channels
+            .get(voiceState.channel_id!) as VoiceChannel)
             ?.voiceMembers.set(member.id, member);
         }
 
@@ -931,10 +936,8 @@ export class Guild extends Base {
   /** Request all guild members from Discord */
   async fetchAllMembers(timeout?: number): Promise<number> {
     return this.fetchMembers({
-      // TODO: how to fethc members from gateway
-      // @ts-ignore idk about this
       guildId: this.id,
-      // timeout,
+      limit: 0
     }).then((m: any[]) => m.length);
   }
 
@@ -1026,9 +1029,7 @@ export class Guild extends Base {
   }
 
   /** Get a guild's channels via the REST API. REST mode is required to use this endpoint. */
-  async getRESTChannels(): Promise<
-    (CategoryChannel | TextChannel | TextVoiceChannel)[]
-  > {
+  async getRESTChannels(): Promise<AnyGuildChannel[]> {
     return await this.client.getRESTGuildChannels.call(this.client, this.id);
   }
 

@@ -39,7 +39,7 @@ export class GuildAuditLogEntry extends Base {
   /** The channel targeted in the entry, action types 26 (MEMBER_MOVE), 72/74/75 (MESSAGE_DELETE/PIN/UNPIN) and 83/84/85 (STAGE_INSTANCE_CREATE/UPDATE/DELETE) only */
   channel?: GuildChannel;
   /** The message that was (un)pinned, action types 74/75 (MESSAGE_PIN/UNPIN) only. If the message is not cached, this will be an object with an `id` key. No other property is guaranteed. */
-  message?: Message;
+  message?: Message | { id: string };
   /** The number of days of inactivity to prune for, action type 21 (MEMBER_PRUNE) only */
   deleteMemberDays?: number;
   /** The number of members pruned from the server, action type 21 (MEMBER_PRUNE) only */

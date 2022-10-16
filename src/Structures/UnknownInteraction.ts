@@ -1,13 +1,26 @@
-import { DiscordInteraction } from "discordeno/types";
+import { DiscordInteraction, InteractionResponseTypes } from "discordeno/types";
 import Client from "../Client.js";
 import Interaction from "./Interaction.js";
+import { Member } from "./Member.js";
+import { Message } from "./Message.js";
+import User from "./User.js";
+import { ApplicationCommandOptionChoice, FileContent, InteractionContent, InteractionContentEdit, InteractionResponse, PossiblyUncachedTextable, TextableChannel } from '../typings.js'
+import Permission from "./Permission.js";
 
-export class UnknownInteraction extends Interaction {
+export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableChannel> extends Interaction {
+    channel?: T;
+    data?: unknown;
+    guildID?: string;
+    member?: Member;
+    message?: Message;
+    type: number = 0;
+    user?: User;
+
   constructor(data: DiscordInteraction, client: Client) {
     super(data, client);
 
     if (data.channel_id !== undefined) {
-      this.channel = this._client.getChannel(data.channel_id) || {
+      this.channel = this.client.getChannel(data.channel_id) || {
         id: data.channel_id,
       };
     }
@@ -28,17 +41,17 @@ export class UnknownInteraction extends Interaction {
           this.channel.guild
         );
       } else {
-        const guild = this._client.guilds.get(data.guild_id);
-        this.member = new Member(data.member, guild, this._client);
+        const guild = this.client.guilds.get(data.guild_id || '');
+        this.member = new Member(data.member, guild, this.client);
       }
     }
 
     if (data.message !== undefined) {
-      this.message = new Message(data.message, this._client);
+      this.message = new Message(data.message, this.client);
     }
 
     if (data.user !== undefined) {
-      this.user = this._client.users.update(data.user, client);
+      this.user = this.client.users.update(data.user, client);
     }
 
     if (data.app_permissions !== undefined) {
@@ -54,12 +67,12 @@ export class UnknownInteraction extends Interaction {
    * @arg {Object} data.data The data to return to discord
    * @returns {Promise}
    */
-  async acknowledge(data) {
+  async acknowledge(data: InteractionResponse) {
     if (this.acknowledged === true) {
       throw new Error("You have already acknowledged this interaction.");
     }
-    return this._client.createInteractionResponse
-      .call(this._client, this.id, this.token, data)
+    return this.client.createInteractionResponse
+      .call(this.client, this.id, this.token, data)
       .then(() => this.update());
   }
 
@@ -97,7 +110,7 @@ export class UnknownInteraction extends Interaction {
    * @arg {String} file.name What to name the file
    * @returns {Promise<Message?>}
    */
-  async createFollowup(content, file) {
+  async createFollowup(content: string | InteractionContent, file?: FileContent | FileContent[]) {
     if (this.acknowledged === false) {
       throw new Error(
         "createFollowup cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, pong, or result first."
@@ -118,8 +131,8 @@ export class UnknownInteraction extends Interaction {
     if (file) {
       content.file = file;
     }
-    return this._client.executeWebhook.call(
-      this._client,
+    return this.client.executeWebhook.call(
+      this.client,
       this.applicationID,
       this.token,
       Object.assign({ wait: true }, content)
@@ -161,7 +174,7 @@ export class UnknownInteraction extends Interaction {
    * @arg {String} file.name What to name the file
    * @returns {Promise}
    */
-  async createMessage(content, file) {
+  async createMessage(content: string | InteractionContent, file?: FileContent | FileContent[]) {
     if (this.acknowledged === true) {
       return this.createFollowup(content, file);
     }
@@ -181,18 +194,18 @@ export class UnknownInteraction extends Interaction {
         content.embeds ||
         content.allowedMentions
       ) {
-        content.allowed_mentions = this._client._formatAllowedMentions(
+        content.allowed_mentions = this.client._formatAllowedMentions(
           content.allowedMentions
         );
       }
     }
-    return this._client.createInteractionResponse
+    return this.client.createInteractionResponse
       .call(
-        this._client,
+        this.client,
         this.id,
         this.token,
         {
-          type: InteractionResponseTypes.CHANNEL_MESSAGE_WITH_SOURCE,
+          type: InteractionResponseTypes.ChannelMessageWithSource,
           data: content,
         },
         file
@@ -206,13 +219,13 @@ export class UnknownInteraction extends Interaction {
    * @arg {Number} [flags] 64 for Ephemeral
    * @returns {Promise}
    */
-  async defer(flags) {
+  async defer(flags: number) {
     if (this.acknowledged === true) {
       throw new Error("You have already acknowledged this interaction.");
     }
-    return this._client.createInteractionResponse
-      .call(this._client, this.id, this.token, {
-        type: InteractionResponseTypes.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+    return this.client.createInteractionResponse
+      .call(this.client, this.id, this.token, {
+        type: InteractionResponseTypes.DeferredChannelMessageWithSource,
         data: {
           flags: flags || 0,
         },
@@ -229,9 +242,9 @@ export class UnknownInteraction extends Interaction {
     if (this.acknowledged === true) {
       throw new Error("You have already acknowledged this interaction.");
     }
-    return this._client.createInteractionResponse
-      .call(this._client, this.id, this.token, {
-        type: InteractionResponseTypes.DEFERRED_UPDATE_MESSAGE,
+    return this.client.createInteractionResponse
+      .call(this.client, this.id, this.token, {
+        type: InteractionResponseTypes.DeferredUpdateMessage,
       })
       .then(() => this.update());
   }
@@ -241,14 +254,14 @@ export class UnknownInteraction extends Interaction {
    * @arg {String} messageID the id of the message to delete, or "@original" for the original response.
    * @returns {Promise}
    */
-  async deleteMessage(messageID) {
+  async deleteMessage(messageID: string) {
     if (this.acknowledged === false) {
       throw new Error(
         "deleteMessage cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, or pong first."
       );
     }
-    return this._client.deleteWebhookMessage.call(
-      this._client,
+    return this.client.deleteWebhookMessage.call(
+      this.client,
       this.applicationID,
       this.token,
       messageID
@@ -266,8 +279,8 @@ export class UnknownInteraction extends Interaction {
         "deleteOriginalMessage cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, or pong first."
       );
     }
-    return this._client.deleteWebhookMessage.call(
-      this._client,
+    return this.client.deleteWebhookMessage.call(
+      this.client,
       this.applicationID,
       this.token,
       "@original"
@@ -308,7 +321,7 @@ export class UnknownInteraction extends Interaction {
    * @arg {String} file.name What to name the file
    * @returns {Promise<Message>}
    */
-  async editMessage(messageID, content, file) {
+  async editMessage(messageID: string, content: string | InteractionContentEdit, file?: FileContent | FileContent[]) {
     if (this.acknowledged === false) {
       throw new Error(
         "editMessage cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, pong, or result first."
@@ -329,8 +342,8 @@ export class UnknownInteraction extends Interaction {
     if (file) {
       content.file = file;
     }
-    return this._client.editWebhookMessage.call(
-      this._client,
+    return this.client.editWebhookMessage.call(
+      this.client,
       this.applicationID,
       this.token,
       messageID,
@@ -371,7 +384,7 @@ export class UnknownInteraction extends Interaction {
    * @arg {String} file.name What to name the file
    * @returns {Promise<Message>}
    */
-  async editOriginalMessage(content, file) {
+  async editOriginalMessage(content: string | InteractionContentEdit, file?: FileContent | FileContent[]) {
     if (this.acknowledged === false) {
       throw new Error(
         "editOriginalMessage cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, pong, or result first."
@@ -392,8 +405,8 @@ export class UnknownInteraction extends Interaction {
     if (file) {
       content.file = file;
     }
-    return this._client.editWebhookMessage.call(
-      this._client,
+    return this.client.editWebhookMessage.call(
+      this.client,
       this.applicationID,
       this.token,
       "@original",
@@ -438,7 +451,7 @@ export class UnknownInteraction extends Interaction {
    * @arg {String} file.name What to name the file
    * @returns {Promise}
    */
-  async editParent(content, file) {
+  async editParent(content: InteractionContentEdit, file?: FileContent | FileContent[]) {
     if (this.acknowledged === true) {
       return this.editOriginalMessage(content);
     }
@@ -458,18 +471,18 @@ export class UnknownInteraction extends Interaction {
         content.embeds ||
         content.allowedMentions
       ) {
-        content.allowed_mentions = this._client._formatAllowedMentions(
+        content.allowed_mentions = this.client._formatAllowedMentions(
           content.allowedMentions
         );
       }
     }
-    return this._client.createInteractionResponse
+    return this.client.createInteractionResponse
       .call(
-        this._client,
+        this.client,
         this.id,
         this.token,
         {
-          type: InteractionResponseTypes.UPDATE_MESSAGE,
+          type: InteractionResponseTypes.UpdateMessage,
           data: content,
         },
         file
@@ -488,8 +501,8 @@ export class UnknownInteraction extends Interaction {
         "getOriginalMessage cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, or pong first."
       );
     }
-    return this._client.getWebhookMessage.call(
-      this._client,
+    return this.client.getWebhookMessage.call(
+      this.client,
       this.applicationID,
       this.token,
       "@original"
@@ -505,9 +518,9 @@ export class UnknownInteraction extends Interaction {
     if (this.acknowledged === true) {
       throw new Error("You have already acknowledged this interaction.");
     }
-    return this._client.createInteractionResponse
-      .call(this._client, this.id, this.token, {
-        type: InteractionResponseTypes.PONG,
+    return this.client.createInteractionResponse
+      .call(this.client, this.id, this.token, {
+        type: InteractionResponseTypes.Pong,
       })
       .then(() => this.update());
   }
@@ -520,13 +533,13 @@ export class UnknownInteraction extends Interaction {
    * @arg {String} choices[].value The choice value to return to the bot
    * @returns {Promise}
    */
-  async result(choices) {
+  async result(choices: ApplicationCommandOptionChoice[]) {
     if (this.acknowledged === true) {
       throw new Error("You have already acknowledged this interaction.");
     }
-    return this._client.createInteractionResponse
-      .call(this._client, this.id, this.token, {
-        type: InteractionResponseTypes.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+    return this.client.createInteractionResponse
+      .call(this.client, this.id, this.token, {
+        type: InteractionResponseTypes.ApplicationCommandAutocompleteResult,
         data: { choices },
       })
       .then(() => this.update());

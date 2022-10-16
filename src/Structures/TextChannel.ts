@@ -1,9 +1,10 @@
 import { BigString, DiscordChannel } from "discordeno/types";
 import { Client } from "../Client.js";
-import { CreateChannelInviteOptions } from "../typings.js";
+import { CreateChannelInviteOptions, CreateThreadOptions, CreateThreadWithoutMessageOptions, FileContent, GetArchivedThreadsOptions, GetMessageReactionOptions, GetMessagesOptions, MessageContent, PurgeChannelOptions } from "../typings.js";
 import Collection from "../Collection.js";
 import Message from "./Message.js";
 import GuildChannel from "./GuildChannel.js";
+import { Invite } from "./Invite.js";
 
 export class TextChannel extends GuildChannel {
   /** Collection of Messages in this channel */
@@ -111,7 +112,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} file.name What to name the file
    * @returns {Promise<Message>}
    */
-  createMessage(content, file) {
+  createMessage(content: MessageContent, file: FileContent | FileContent[]) {
     return this.client.createMessage.call(this.client, this.id, content, file);
   }
 
@@ -123,7 +124,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} options.name The thread channel name
    * @returns {Promise<NewsThreadChannel | PublicThreadChannel>}
    */
-  createThreadWithMessage(messageID, options) {
+  createThreadWithMessage(messageID: string, options: CreateThreadOptions) {
     return this.client.createThreadWithMessage.call(
       this.client,
       this.id,
@@ -141,7 +142,7 @@ export class TextChannel extends GuildChannel {
    * @arg {Number} [options.type] The channel type of the thread to create. It is recommended to explicitly set this property as this will be a required property in API v10
    * @returns {Promise<PrivateThreadChannel>}
    */
-  createThreadWithoutMessage(options) {
+  createThreadWithoutMessage(options: CreateThreadWithoutMessageOptions) {
     return this.client.createThreadWithoutMessage.call(
       this.client,
       this.id,
@@ -157,7 +158,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} [reason] The reason to be displayed in audit logs
    * @returns {Promise<Object>} Resolves with a webhook object
    */
-  createWebhook(options, reason) {
+  createWebhook(options: { name: string; avatar?: string | null }, reason: string) {
     return this.client.createChannelWebhook.call(
       this.client,
       this.id,
@@ -172,7 +173,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} [reason] The reason to be displayed in audit logs
    * @returns {Promise}
    */
-  deleteMessage(messageID, reason) {
+  deleteMessage(messageID: string, reason: string) {
     return this.client.deleteMessage.call(
       this.client,
       this.id,
@@ -187,7 +188,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} [reason] The reason to be displayed in audit logs
    * @returns {Promise}
    */
-  deleteMessages(messageIDs, reason) {
+  deleteMessages(messageIDs: string[], reason: string) {
     return this.client.deleteMessages.call(
       this.client,
       this.id,
@@ -230,7 +231,7 @@ export class TextChannel extends GuildChannel {
    * @arg {Number} [content.flags] A number representing the flags to apply to the message. See [the official Discord API documentation entry](https://discord.com/developers/docs/resources/channel#message-object-message-flags) for flags reference
    * @returns {Promise<Message>}
    */
-  editMessage(messageID, content) {
+  editMessage(messageID: string, content: string) {
     return this.client.editMessage.call(
       this.client,
       this.id,
@@ -244,7 +245,7 @@ export class TextChannel extends GuildChannel {
    * @returns {Promise<Object>} An object containing an array of `threads`, an array of `members` and whether the response `hasMore` threads that could be returned in a subsequent call
    */
   getActiveThreads() {
-    return this.client.getActiveThreads.call(this.client, this.id);
+    return this.client.getActivedThreads.call(this.client, this.id);
   }
 
   /**
@@ -255,7 +256,7 @@ export class TextChannel extends GuildChannel {
    * @arg {Number} [options.limit] Maximum number of threads to return
    * @returns {Promise<Object>} An object containing an array of `threads`, an array of `members` and whether the response `hasMore` threads that could be returned in a subsequent call
    */
-  getArchivedThreads(type, options) {
+  getArchivedThreads(type: "public" | "private", options: GetArchivedThreadsOptions) {
     return this.client.getArchivedThreads.call(
       this.client,
       this.id,
@@ -279,7 +280,7 @@ export class TextChannel extends GuildChannel {
    * @arg {Number} [options.limit] Maximum number of threads to return
    * @returns {Promise<Object>} An object containing an array of `threads`, an array of `members` and whether the response `hasMore` threads that could be returned in a subsequent call
    */
-  getJoinedPrivateArchivedThreads(options) {
+  getJoinedPrivateArchivedThreads(options: GetArchivedThreadsOptions) {
     return this.client.getJoinedPrivateArchivedThreads.call(
       this.client,
       this.id,
@@ -292,7 +293,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} messageID The ID of the message
    * @returns {Promise<Message>}
    */
-  getMessage(messageID) {
+  getMessage(messageID: string) {
     return this.client.getMessage.call(this.client, this.id, messageID);
   }
 
@@ -303,19 +304,15 @@ export class TextChannel extends GuildChannel {
    * @arg {Object} [options] Options for the request. If this is a number, it is treated as `options.limit` ([DEPRECATED] behavior)
    * @arg {Number} [options.limit=100] The maximum number of users to get
    * @arg {String} [options.after] Get users after this user ID
-   * @arg {String} [before] [DEPRECATED] Get users before this user ID. Discord no longer supports this parameter
-   * @arg {String} [after] [DEPRECATED] Get users after this user ID
    * @returns {Promise<Array<User>>}
    */
-  getMessageReaction(messageID, reaction, options, before, after) {
+  getMessageReaction(messageID:string, reaction:string, options: GetMessageReactionOptions) {
     return this.client.getMessageReaction.call(
       this.client,
       this.id,
       messageID,
       reaction,
       options,
-      before,
-      after
     );
   }
 
@@ -326,19 +323,13 @@ export class TextChannel extends GuildChannel {
    * @arg {String} [options.around] Get messages around this message ID (does not work with limit > 100)
    * @arg {String} [options.before] Get messages before this message ID
    * @arg {Number} [options.limit=50] The max number of messages to get
-   * @arg {String} [before] [DEPRECATED] Get messages before this message ID
-   * @arg {String} [after] [DEPRECATED] Get messages after this message ID
-   * @arg {String} [around] [DEPRECATED] Get messages around this message ID (does not work with limit > 100)
    * @returns {Promise<Array<Message>>}
    */
-  getMessages(options, before, after, around) {
+  getMessages(options: GetMessagesOptions) {
     return this.client.getMessages.call(
       this.client,
       this.id,
       options,
-      before,
-      after,
-      around
     );
   }
 
@@ -363,7 +354,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} messageID The ID of the message
    * @returns {Promise}
    */
-  pinMessage(messageID) {
+  pinMessage(messageID: string) {
     return this.client.pinMessage.call(this.client, this.id, messageID);
   }
 
@@ -375,21 +366,13 @@ export class TextChannel extends GuildChannel {
    * @arg {Function} [options.filter] Optional filter function that returns a boolean when passed a Message object
    * @arg {Number} options.limit The max number of messages to search through, -1 for no limit
    * @arg {String} [options.reason] The reason to be displayed in audit logs
-   * @arg {Function} [filter] [DEPRECATED] Optional filter function that returns a boolean when passed a Message object
-   * @arg {String} [before] [DEPRECATED] Get messages before this message ID
-   * @arg {String} [after] [DEPRECATED] Get messages after this message ID
-   * @arg {String} [reason] [DEPRECATED] The reason to be displayed in audit logs
    * @returns {Promise<Number>} Resolves with the number of messages deleted
    */
-  purge(limit, filter, before, after, reason) {
+  purge(limit: PurgeChannelOptions) {
     return this.client.purgeChannel.call(
       this.client,
       this.id,
       limit,
-      filter,
-      before,
-      after,
-      reason
     );
   }
 
@@ -400,7 +383,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} [userID="@me"] The ID of the user to remove the reaction for
    * @returns {Promise}
    */
-  removeMessageReaction(messageID, reaction, userID) {
+  removeMessageReaction(messageID: string, reaction: string, userID: string) {
     return this.client.removeMessageReaction.call(
       this.client,
       this.id,
@@ -416,7 +399,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} reaction The reaction (Unicode string if Unicode emoji, `emojiName:emojiID` if custom emoji)
    * @returns {Promise}
    */
-  removeMessageReactionEmoji(messageID, reaction) {
+  removeMessageReactionEmoji(messageID: string, reaction: string) {
     return this.client.removeMessageReactionEmoji.call(
       this.client,
       this.id,
@@ -430,7 +413,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} messageID The ID of the message
    * @returns {Promise}
    */
-  removeMessageReactions(messageID) {
+  removeMessageReactions(messageID: string) {
     return this.client.removeMessageReactions.call(
       this.client,
       this.id,
@@ -451,7 +434,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} messageID The ID of the message
    * @returns {Promise}
    */
-  unpinMessage(messageID) {
+  unpinMessage(messageID: string) {
     return this.client.unpinMessage.call(this.client, this.id, messageID);
   }
 
@@ -460,7 +443,7 @@ export class TextChannel extends GuildChannel {
    * @arg {String} messageID The ID of the message
    * @returns {Promise}
    */
-  unsendMessage(messageID) {
+  unsendMessage(messageID: string) {
     return this.client.deleteMessage.call(this.client, this.id, messageID);
   }
 
