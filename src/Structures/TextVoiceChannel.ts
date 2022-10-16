@@ -1,7 +1,7 @@
 import { DiscordChannel } from 'discordeno/types';
 import { Client } from '../Client.js';
 import Collection from '../Collection.js';
-import { CreateInviteOptions, FileContent, GetMessageReactionOptions, GetMessagesOptions, MessageContent, MessageContentEdit, PurgeChannelOptions } from '../index.js';
+import { CreateInviteOptions, FileContent, GetMessageReactionOptions, GetMessagesOptions, MessageContent, MessageContentEdit, PurgeChannelOptions } from '../typings.js';
 import Message from './Message.js';
 import VoiceChannel from './VoiceChannel.js';
 
