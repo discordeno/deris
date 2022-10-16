@@ -53,7 +53,7 @@ export class AutocompleteInteraction extends Interaction {
 
   /** The channel the interaction was created in. */
   get channel(): PrivateChannel | TextChannel | NewsChannel {
-    return this.client.getChannel(this.channelID);
+    return this.client.getChannel(this.channelID) as (PrivateChannel | TextChannel | NewsChannel);
   }
 
   /** The guild the interaction was created in. */

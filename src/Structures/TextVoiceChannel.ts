@@ -25,7 +25,7 @@ export class TextVoiceChannel extends VoiceChannel {
   messages: Collection<string, Message>;
   rateLimitPerUser: number | null;
 
-  constructor(data: DiscordChannel, client: Client, messageLimit: number) {
+  constructor(data: DiscordChannel, client: Client, messageLimit?: number) {
     super(data, client);
 
     this.messages = new Collection();

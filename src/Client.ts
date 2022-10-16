@@ -140,6 +140,7 @@ import {
   AllowedMentions,
   AnyChannel,
   AnyGuildChannel,
+  AnyThreadChannel,
   ApplicationCommand,
   ApplicationCommandPermissions,
   ApplicationCommandStructure,
@@ -843,7 +844,7 @@ export class Client extends EventEmitter {
         name: options.name,
         auto_archive_duration: options.autoArchiveDuration,
       },
-    }).then((channel) => Channel.from(channel, this));
+    }).then((channel) => Channel.from(channel, this)) as (NewsThreadChannel | PublicThreadChannel);
   }
 
   /** Create a thread without an existing message */
@@ -858,7 +859,7 @@ export class Client extends EventEmitter {
         name: options.name,
         type: options.type,
       },
-    }).then((channel) => Channel.from(channel, this));
+    }).then((channel) => Channel.from(channel, this)) as PrivateThreadChannel;
   }
 
   /** Crosspost (publish) a message to subscribed channels */
@@ -1073,7 +1074,7 @@ export class Client extends EventEmitter {
         video_quality_mode: options.videoQualityMode,
         permission_overwrites: options.permissionOverwrites,
       },
-    }).then((channel) => Channel.from(channel, this));
+    }).then((channel) => Channel.from(channel, this)) as AnyGuildChannel;
   }
 
   /** Create a channel permission overwrite */
@@ -1721,7 +1722,7 @@ export class Client extends EventEmitter {
 
     if (guildID) {
       const guild = this.guilds.get(guildID);
-      if (guild) return guild.channels.get(channelID)!;
+      if (guild) return guild.channels.get(channelID) as AnyGuildChannel;
     }
 
     return this.privateChannels.get(id)!;
@@ -1821,7 +1822,7 @@ export class Client extends EventEmitter {
       });
 
       const threads = data.threads.map((thread: DiscordChannel) => {
-        const channel = Channel.from(thread, this);
+        const channel = Channel.from(thread, this) as AnyThreadChannel;
         guild?.threads.set(channel.id, channel);
         return channel;
       });
@@ -2194,7 +2195,7 @@ export class Client extends EventEmitter {
   async getRESTChannel(channelID: BigString): Promise<AnyChannel> {
     return await this.get(CHANNEL(channelID)).then((channel: DiscordChannel) =>
       Channel.from(channel, this)
-    );
+    ) as AnyChannel;
   }
 
   /** Get a guild's data via the REST API. */
