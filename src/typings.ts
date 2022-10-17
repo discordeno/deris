@@ -223,11 +223,11 @@ export type TextVoiceChannelTypes = ChannelTypes.GuildVoice | ChannelTypes.Guild
 // export type InteractionCallbackData = InteractionAutocomplete | InteractionContent;
 export type InteractionContent = Pick<
   WebhookPayload,
-  "content" | "embeds" | "allowedMentions" | "tts" | "flags" | "components"
+  "content" | "embeds" | "allowedMentions" | "tts" | "flags" | "components" | "file"
 >;
 export type InteractionContentEdit = Pick<
   WebhookPayload,
-  "content" | "embeds" | "allowedMentions" | "components"
+  "content" | "embeds" | "allowedMentions" | "components" | "file"
 >;
 // export type InteractionDataOptions =
 //   | InteractionDataOptionsSubCommand

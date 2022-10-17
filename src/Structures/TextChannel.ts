@@ -1,10 +1,23 @@
 import { BigString, DiscordChannel } from "discordeno/types";
 import { Client } from "../Client.js";
-import { CreateChannelInviteOptions, CreateThreadOptions, CreateThreadWithoutMessageOptions, FileContent, GetArchivedThreadsOptions, GetMessageReactionOptions, GetMessagesOptions, MessageContent, PurgeChannelOptions } from "../typings.js";
+import {
+  CreateChannelInviteOptions,
+  CreateThreadOptions,
+  CreateThreadWithoutMessageOptions,
+  FileContent,
+  GetArchivedThreadsOptions,
+  GetMessageReactionOptions,
+  GetMessagesOptions,
+  ListedChannelThreads,
+  MessageContent,
+  PurgeChannelOptions,
+} from "../typings.js";
 import Collection from "../Collection.js";
 import Message from "./Message.js";
 import GuildChannel from "./GuildChannel.js";
 import { Invite } from "./Invite.js";
+import PrivateThreadChannel from "./PrivateThreadChannel.js";
+import PublicThreadChannel from "./PublicThreadChannel.js";
 
 export class TextChannel extends GuildChannel {
   /** Collection of Messages in this channel */
@@ -62,7 +75,10 @@ export class TextChannel extends GuildChannel {
   }
 
   /** Create an invite for the channel */
-  async createInvite(options?: CreateChannelInviteOptions, reason?: string): Promise<Invite> {
+  async createInvite(
+    options?: CreateChannelInviteOptions,
+    reason?: string
+  ): Promise<Invite> {
     return await this.client.createChannelInvite.call(
       this.client,
       this.id,
@@ -158,7 +174,10 @@ export class TextChannel extends GuildChannel {
    * @arg {String} [reason] The reason to be displayed in audit logs
    * @returns {Promise<Object>} Resolves with a webhook object
    */
-  createWebhook(options: { name: string; avatar?: string | null }, reason: string) {
+  createWebhook(
+    options: { name: string; avatar?: string | null },
+    reason: string
+  ) {
     return this.client.createChannelWebhook.call(
       this.client,
       this.id,
@@ -240,27 +259,23 @@ export class TextChannel extends GuildChannel {
     );
   }
 
-  /**
-   * [DEPRECATED] Get all active threads in this channel. Use guild.getActiveThreads instead
-   * @returns {Promise<Object>} An object containing an array of `threads`, an array of `members` and whether the response `hasMore` threads that could be returned in a subsequent call
-   */
-  getActiveThreads() {
-    return this.client.getActivedThreads.call(this.client, this.id);
-  }
-
-  /**
-   * Get all archived threads in this channel
-   * @arg {String} type The type of thread channel, either "public" or "private"
-   * @arg {Object} [options] Additional options when requesting archived threads
-   * @arg {Date} [options.before] List of threads to return before the timestamp
-   * @arg {Number} [options.limit] Maximum number of threads to return
-   * @returns {Promise<Object>} An object containing an array of `threads`, an array of `members` and whether the response `hasMore` threads that could be returned in a subsequent call
-   */
-  getArchivedThreads(type: "public" | "private", options: GetArchivedThreadsOptions) {
-    return this.client.getArchivedThreads.call(
+  /** Get all archived threads in this channel */
+  async getArchivedThreads(
+    type: "private",
+    options?: GetArchivedThreadsOptions
+  ): Promise<ListedChannelThreads<PrivateThreadChannel>>;
+  async getArchivedThreads(
+    type: "public",
+    options?: GetArchivedThreadsOptions
+  ): Promise<ListedChannelThreads<PublicThreadChannel>>;
+  async getArchivedThreads(
+    type: "public" | "private",
+    options?: GetArchivedThreadsOptions
+  ): Promise<ListedChannelThreads<PrivateThreadChannel | PublicThreadChannel>> {
+    return await this.client.getArchivedThreads.call(
       this.client,
       this.id,
-      type,
+      type as "public",
       options
     );
   }
@@ -306,13 +321,17 @@ export class TextChannel extends GuildChannel {
    * @arg {String} [options.after] Get users after this user ID
    * @returns {Promise<Array<User>>}
    */
-  getMessageReaction(messageID:string, reaction:string, options: GetMessageReactionOptions) {
+  getMessageReaction(
+    messageID: string,
+    reaction: string,
+    options: GetMessageReactionOptions
+  ) {
     return this.client.getMessageReaction.call(
       this.client,
       this.id,
       messageID,
       reaction,
-      options,
+      options
     );
   }
 
@@ -326,11 +345,7 @@ export class TextChannel extends GuildChannel {
    * @returns {Promise<Array<Message>>}
    */
   getMessages(options: GetMessagesOptions) {
-    return this.client.getMessages.call(
-      this.client,
-      this.id,
-      options,
-    );
+    return this.client.getMessages.call(this.client, this.id, options);
   }
 
   /**
@@ -369,11 +384,7 @@ export class TextChannel extends GuildChannel {
    * @returns {Promise<Number>} Resolves with the number of messages deleted
    */
   purge(limit: PurgeChannelOptions) {
-    return this.client.purgeChannel.call(
-      this.client,
-      this.id,
-      limit,
-    );
+    return this.client.purgeChannel.call(this.client, this.id, limit);
   }
 
   /**

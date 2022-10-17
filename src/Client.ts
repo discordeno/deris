@@ -1670,12 +1670,12 @@ export class Client extends EventEmitter {
 
   /** Get all archived threads in a channel */
   async getArchivedThreads(
-    channelID: string,
+    channelID: BigString,
     type: "private",
     options?: GetArchivedThreadsOptions
   ): Promise<ListedChannelThreads<PrivateThreadChannel>>;
   async getArchivedThreads(
-    channelID: string,
+    channelID: BigString,
     type: "public",
     options?: GetArchivedThreadsOptions
   ): Promise<ListedChannelThreads<PublicThreadChannel>>;

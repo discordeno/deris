@@ -59,25 +59,27 @@ export class VoiceChannel extends GuildChannel {
         return this.client.getChannelInvites.call(this.client, this.id);
     }
 
-    /**
-     * Joins the channel.
-     * @arg {Object} [options] VoiceConnection constructor options
-     * @arg {Object} [options.opusOnly] Skip opus encoder initialization. You should not enable this unless you know what you are doing
-     * @arg {Object} [options.shared] Whether the VoiceConnection will be part of a SharedStream or not
-     * @arg {Boolean} [options.selfMute] Whether the bot joins the channel muted or not
-     * @arg {Boolean} [options.selfDeaf] Whether the bot joins the channel deafened or not
-     * @returns {Promise<VoiceConnection>} Resolves with a VoiceConnection
-     */
-    join(options: JoinVoiceChannelOptions) {
-        return this.client.joinVoiceChannel.call(this.client, this.id, options);
-    }
+    // TODO: gateway
+    // /**
+    //  * Joins the channel.
+    //  * @arg {Object} [options] VoiceConnection constructor options
+    //  * @arg {Object} [options.opusOnly] Skip opus encoder initialization. You should not enable this unless you know what you are doing
+    //  * @arg {Object} [options.shared] Whether the VoiceConnection will be part of a SharedStream or not
+    //  * @arg {Boolean} [options.selfMute] Whether the bot joins the channel muted or not
+    //  * @arg {Boolean} [options.selfDeaf] Whether the bot joins the channel deafened or not
+    //  * @returns {Promise<VoiceConnection>} Resolves with a VoiceConnection
+    //  */
+    // join(options: JoinVoiceChannelOptions) {
+    //     return this.client.joinVoiceChannel.call(this.client, this.id, options);
+    // }
 
-    /**
-     * Leaves the channel.
-     */
-    leave() {
-        return this.client.leaveVoiceChannel.call(this.client, this.id);
-    }
+    // TODO: gateway
+    // /**
+    //  * Leaves the channel.
+    //  */
+    // leave() {
+    //     return this.client.leaveVoiceChannel.call(this.client, this.id);
+    // }
 
     toJSON(props: string[] = []) {
         return super.toJSON(['bitrate', 'rtcRegion', 'userLimit', 'videoQualityMode', 'voiceMembers', ...props]);

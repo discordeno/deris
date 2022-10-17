@@ -4,23 +4,36 @@ import Interaction from "./Interaction.js";
 import { Member } from "./Member.js";
 import { Message } from "./Message.js";
 import User from "./User.js";
-import { ApplicationCommandOptionChoice, FileContent, InteractionContent, InteractionContentEdit, InteractionResponse, PossiblyUncachedTextable, TextableChannel } from '../typings.js'
+import {
+  ApplicationCommandOptionChoice,
+  FileContent,
+  InteractionContent,
+  InteractionContentEdit,
+  InteractionResponse,
+  PossiblyUncachedTextable,
+  TextableChannel,
+} from "../typings.js";
 import Permission from "./Permission.js";
 
-export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableChannel> extends Interaction {
-    channel?: T;
-    data?: unknown;
-    guildID?: string;
-    member?: Member;
-    message?: Message;
-    type: number = 0;
-    user?: User;
+export class UnknownInteraction<
+  T extends PossiblyUncachedTextable = TextableChannel
+> extends Interaction {
+  channel?: T;
+  data?: unknown;
+  guildID?: string;
+  member?: Member;
+  message?: Message;
+  type: number = 0;
+  user?: User;
+  appPermissions?: Permission;
 
   constructor(data: DiscordInteraction, client: Client) {
     super(data, client);
 
     if (data.channel_id !== undefined) {
-      this.channel = this.client.getChannel(data.channel_id) || {
+      this.channel = (this.client.getChannel(
+        data.channel_id
+      ) as unknown as T) || {
         id: data.channel_id,
       };
     }
@@ -34,16 +47,9 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
     }
 
     if (data.member !== undefined) {
-      if (this.channel.guild) {
-        data.member.id = data.member.user.id;
-        this.member = this.channel.guild.members.update(
-          data.member,
-          this.channel.guild
-        );
-      } else {
-        const guild = this.client.guilds.get(data.guild_id || '');
-        this.member = new Member(data.member, guild, this.client);
-      }
+      const guild = this.client.guilds.get(data.guild_id || "")!;
+      this.member = new Member(data.member, guild, this.client);
+      guild.members.set(this.member.id, this.member);
     }
 
     if (data.message !== undefined) {
@@ -51,7 +57,8 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
     }
 
     if (data.user !== undefined) {
-      this.user = this.client.users.update(data.user, client);
+      this.user = new User(data.user, this.client);
+      this.client.users.set(this.user.id, this.user);
     }
 
     if (data.app_permissions !== undefined) {
@@ -110,7 +117,10 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
    * @arg {String} file.name What to name the file
    * @returns {Promise<Message?>}
    */
-  async createFollowup(content: string | InteractionContent, file?: FileContent | FileContent[]) {
+  async createFollowup(
+    content: string | InteractionContent,
+    file?: FileContent | FileContent[]
+  ) {
     if (this.acknowledged === false) {
       throw new Error(
         "createFollowup cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, pong, or result first."
@@ -135,7 +145,7 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
       this.client,
       this.applicationID,
       this.token,
-      Object.assign({ wait: true }, content)
+      Object.assign({ wait: true as true }, content)
     );
   }
 
@@ -174,7 +184,10 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
    * @arg {String} file.name What to name the file
    * @returns {Promise}
    */
-  async createMessage(content: string | InteractionContent, file?: FileContent | FileContent[]) {
+  async createMessage(
+    content: string | InteractionContent,
+    file?: FileContent | FileContent[]
+  ) {
     if (this.acknowledged === true) {
       return this.createFollowup(content, file);
     }
@@ -189,16 +202,8 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
       ) {
         content.content = "" + content.content;
       }
-      if (
-        content.content !== undefined ||
-        content.embeds ||
-        content.allowedMentions
-      ) {
-        content.allowed_mentions = this.client._formatAllowedMentions(
-          content.allowedMentions
-        );
-      }
     }
+
     return this.client.createInteractionResponse
       .call(
         this.client,
@@ -321,7 +326,11 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
    * @arg {String} file.name What to name the file
    * @returns {Promise<Message>}
    */
-  async editMessage(messageID: string, content: string | InteractionContentEdit, file?: FileContent | FileContent[]) {
+  async editMessage(
+    messageID: string,
+    content: string | InteractionContentEdit,
+    file?: FileContent | FileContent[]
+  ) {
     if (this.acknowledged === false) {
       throw new Error(
         "editMessage cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, pong, or result first."
@@ -384,7 +393,10 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
    * @arg {String} file.name What to name the file
    * @returns {Promise<Message>}
    */
-  async editOriginalMessage(content: string | InteractionContentEdit, file?: FileContent | FileContent[]) {
+  async editOriginalMessage(
+    content: string | InteractionContentEdit,
+    file?: FileContent | FileContent[]
+  ) {
     if (this.acknowledged === false) {
       throw new Error(
         "editOriginalMessage cannot be used to acknowledge an interaction, please use acknowledge, createMessage, defer, deferUpdate, editParent, pong, or result first."
@@ -405,6 +417,7 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
     if (file) {
       content.file = file;
     }
+
     return this.client.editWebhookMessage.call(
       this.client,
       this.applicationID,
@@ -451,7 +464,10 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
    * @arg {String} file.name What to name the file
    * @returns {Promise}
    */
-  async editParent(content: InteractionContentEdit, file?: FileContent | FileContent[]) {
+  async editParent(
+    content: InteractionContentEdit,
+    file?: FileContent | FileContent[]
+  ) {
     if (this.acknowledged === true) {
       return this.editOriginalMessage(content);
     }
@@ -466,16 +482,8 @@ export class UnknownInteraction<T extends PossiblyUncachedTextable = TextableCha
       ) {
         content.content = "" + content.content;
       }
-      if (
-        content.content !== undefined ||
-        content.embeds ||
-        content.allowedMentions
-      ) {
-        content.allowed_mentions = this.client._formatAllowedMentions(
-          content.allowedMentions
-        );
-      }
     }
+
     return this.client.createInteractionResponse
       .call(
         this.client,

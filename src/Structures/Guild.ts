@@ -943,8 +943,8 @@ export class Guild extends Base {
 
   /** Request specific guild members through the gateway connection */
   async fetchMembers(options: RequestGuildMembers): Promise<Member[]> {
-    // TODO: make a client options users can provide here.
-    return this.client.requestGuildMembers(this.id, options);
+    // TODO: Use gateway fetch
+    return this.client.getRESTGuildMembers(this.id, options);
   }
 
   /** Get all active threads in this guild */
@@ -1136,10 +1136,11 @@ export class Guild extends Base {
     return await this.client.leaveGuild.call(this.client, this.id);
   }
 
-  /** Leaves the voice channel in this guild */
-  async leaveVoiceChannel(): Promise<void> {
-    return await this.client.closeVoiceConnection.call(this.client, this.id);
-  }
+  // TODO: gateway voice
+  // /** Leaves the voice channel in this guild */
+  // async leaveVoiceChannel(): Promise<void> {
+  //   return await this.client.closeVoiceConnection.call(this.client, this.id);
+  // }
 
   /** Get the guild permissions of a member */
   permissionsOf(memberID: BigString | Member): Permission {

@@ -170,9 +170,8 @@ export class Member extends Base {
     if (this.guild && this.guild.voiceStates.has(this.id)) {
       return this.guild.voiceStates.get(this.id);
     } else {
-      return new VoiceState({
-        id: this.id,
-      });
+      // @ts-ignore some eris magic at play here
+      return new VoiceState({id: this.id,});
     }
   }
 
