@@ -221,7 +221,10 @@ export class Client extends EventEmitter {
   _privateChannelMap = new Collection<BigString, BigString>();
   privateChannels = new Collection<BigString, PrivateChannel>();
 
+  /** Rest handler */
   requestHandler: RequestHandler;
+  /** Whether or not the client is fully ready. */
+  ready = false;
 
   constructor(token: string, options: ClientOptions) {
     super();

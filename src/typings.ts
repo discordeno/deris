@@ -1038,9 +1038,9 @@ export interface PartialEmoji {
 //   res: (value: Member[]) => void;
 //   timeout: number;
 // }
-// export interface ShardManagerOptions {
-//   concurrency?: number | "auto";
-// }
+export interface ShardManagerOptions {
+  concurrency?: number | "auto";
+}
 
 // // Guild
 export interface CreateGuildOptions {
