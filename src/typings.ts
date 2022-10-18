@@ -608,16 +608,16 @@ export interface ThreadTextable extends Textable, Pinnable {
 //   owner?: string;
 //   prefix?: string | string[];
 // }
-// export interface RequestHandlerOptions {
-//   agent?: HTTPSAgent;
-//   baseURL?: string;
-//   decodeReasons?: boolean;
-//   disableLatencyCompensation?: boolean;
-//   domain?: string;
-//   latencyThreshold?: number;
-//   ratelimiterOffset?: number;
-//   requestTimeout?: number;
-// }
+export interface RequestHandlerOptions {
+  // agent?: HTTPSAgent;
+  baseURL?: string;
+  decodeReasons?: boolean;
+  disableLatencyCompensation?: boolean;
+  domain?: string;
+  latencyThreshold?: number;
+  ratelimiterOffset?: number;
+  requestTimeout?: number;
+}
 
 // // Command
 // export interface CommandCooldownExclusions {

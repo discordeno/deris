@@ -112,6 +112,7 @@ import {
   WEBHOOK_TOKEN,
   WEBHOOK_TOKEN_SLACK,
 } from "./Endpoints.js";
+import RequestHandler from "./RequestHandler.js";
 import CategoryChannel from "./Structures/CategoryChannel.js";
 import Channel from "./Structures/Channel.js";
 import ExtendedUser from "./Structures/ExtendedUser.js";
@@ -220,6 +221,8 @@ export class Client extends EventEmitter {
   _privateChannelMap = new Collection<BigString, BigString>();
   privateChannels = new Collection<BigString, PrivateChannel>();
 
+  requestHandler: RequestHandler;
+
   constructor(token: string, options: ClientOptions) {
     super();
 
@@ -235,6 +238,10 @@ export class Client extends EventEmitter {
       seedVoiceConnections: options.seedVoiceConnections ?? true,
     };
     this.token = token;
+
+    this.requestHandler = new RequestHandler(this, {});
+    // NO PROXY REST START ALARMS
+    if (!this.proxyURL) this.requestHandler.warnUser();
   }
 
   /** The amount of time in milliseconds that this client has been online for. */
@@ -259,12 +266,12 @@ export class Client extends EventEmitter {
 
   /** The url to the REST proxy to send requests to. */
   get proxyURL(): string {
-    return this.options.proxyURL;
+    return this.options.proxyURL ?? "";
   }
 
   /** The password/authorization to confirm that these request made to your rest proxy are indeed from you and not a hacker. */
   get proxyRestAuthorization(): string {
-    return this.options.proxyRestAuthorization;
+    return this.options.proxyRestAuthorization ?? "";
   }
 
   /** The application id(NOT the bot id). The bot id and application id are the same for newer bots but older bots have different ids. */
@@ -2770,9 +2777,9 @@ export interface ParsedClientOptions {
   /** The image size to use by default. */
   defaultImageSize: ImageSize;
   /** The url to the REST proxy to send requests to. This url should nly include the initial domain:port portion until api/v.... */
-  proxyURL: string;
+  proxyURL?: string;
   /** The password/authorization to confirm that these request made to your rest proxy are indeed from you and not a hacker. */
-  proxyRestAuthorization: string;
+  proxyRestAuthorization?: string;
   /** The application id(NOT the bot id). The bot id and application id are the same for newer bots but older bots have different ids. */
   applicationId: BigString;
   /** The message limit you would like to set. */
