@@ -76,3 +76,5 @@ export class Base {
     return json;
   }
 }
+
+export default Base;
