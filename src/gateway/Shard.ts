@@ -576,11 +576,6 @@ export class Shard extends EventEmitter implements SimpleJSON {
         );
     }
 
-    requestGuildSync(guildID: string) {
-        // TODO: Self bot thing?
-        this.sendWS(GatewayOpcodes.SYNC_GUILD, guildID);
-    }
-
     reset() {
         this.connecting = false;
         this.ready = false;
@@ -639,8 +634,7 @@ export class Shard extends EventEmitter implements SimpleJSON {
     sendStatusUpdate() {
         this.sendWS(GatewayOpcodes.PresenceUpdate, {
             activities: this.presence.activities,
-            // TODO: Self bot thing?
-            afk: !!this.presence.afk, // For push notifications
+            afk: false,
             since: this.presence.status === 'idle' ? Date.now() : 0,
             status: this.presence.status,
         });
@@ -665,21 +659,6 @@ export class Shard extends EventEmitter implements SimpleJSON {
                 this.presenceUpdateBucket.queue(func, priority);
             }
             this.globalBucket.queue(func, priority);
-        }
-    }
-
-    // TODO: Self bot thing?
-    syncGuild(guildID: string) {
-        if (this.guildSyncQueueLength + 3 + guildID.length > 4081) {
-            // 4096 - "{\"op\":12,\"d\":[]}".length + 1 for lazy comma offset
-            this.requestGuildSync(this.guildSyncQueue);
-            this.guildSyncQueue = [guildID];
-            this.guildSyncQueueLength = 1 + guildID.length + 3;
-        } else if (this.ready) {
-            this.requestGuildSync([guildID]);
-        } else {
-            this.guildSyncQueue.push(guildID);
-            this.guildSyncQueueLength += guildID.length + 3;
         }
     }
 
@@ -2026,23 +2005,6 @@ export class Shard extends EventEmitter implements SimpleJSON {
                     channelID: packet.d.channel_id,
                     guildID: packet.d.guild_id,
                 });
-                break;
-            }
-            case 'PRESENCES_REPLACE': {
-                const packet = pkt;
-
-                for (const presence of packet.d) {
-                    const guild = this.client.guilds.get(presence.guild_id);
-                    if (!guild) {
-                        this.emit('debug', 'Rogue presences replace: ' + JSON.stringify(presence), this.id);
-                        continue;
-                    }
-                    const member = guild.members.get(presence.user.id);
-                    if (!member && presence.user.username) {
-                        presence.id = presence.user.id;
-                        member.update(presence);
-                    }
-                }
                 break;
             }
             case 'THREAD_CREATE': {
