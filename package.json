@@ -19,9 +19,13 @@
   "homepage": "https://github.com/discordeno/deris#readme",
   "dependencies": {
     "discordeno": "^17.0.0",
-    "typescript": "^4.8.3"
+    "erlpack": "^0.1.4",
+    "pako": "^2.0.4",
+    "typescript": "^4.8.3",
+    "zlib-sync": "^0.1.7"
   },
   "devDependencies": {
-    "@types/node": "^18.7.18"
+    "@types/node": "^18.7.18",
+    "@types/pako": "^2.0.0"
   }
 }

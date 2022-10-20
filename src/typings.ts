@@ -1,4 +1,5 @@
 import {
+  ActivityTypes,
   ApplicationCommandOptionTypes,
   ApplicationCommandPermissionTypes,
   ApplicationCommandTypes,
@@ -22,6 +23,7 @@ import Collection from "./Collection.js";
 import CategoryChannel from "./Structures/CategoryChannel.js";
 import GuildAuditLogEntry from "./Structures/GuildAuditLogEntry.js";
 import GuildIntegration from "./Structures/GuildIntegration.js";
+import Member from "./Structures/Member.js";
 import Message from "./Structures/Message.js";
 import NewsChannel from "./Structures/NewsChannel.js";
 import NewsThreadChannel from "./Structures/NewsThreadChannel.js";
@@ -300,11 +302,12 @@ export type MessageContentEdit = string | AdvancedMessageContentEdit;
 // export type PermissionType = Constants["PermissionOverwriteTypes"][keyof Constants["PermissionOverwriteTypes"]];
 
 // // Presence/Relationship
-// export type ActivityType = BotActivityType | Constants["ActivityTypes"]["CUSTOM"];
-// export type BotActivityType = Constants["ActivityTypes"][Exclude<keyof Constants["ActivityTypes"], "CUSTOM">];
+export type ActivityType = ActivityTypes;
+export type BotActivityType = Exclude<ActivityTypes, ActivityTypes.Custom>
+
 // export type FriendSuggestionReasons = { name: string; platform_type: string; type: number }[];
-// export type Status = "online" | "idle" | "dnd";
-// export type SelfStatus = Status | "invisible";
+export type Status = "online" | "idle" | "dnd";
+export type SelfStatus = Status | "invisible";
 // export type UserStatus = Status | "offline";
 
 // // Selfbot
@@ -333,15 +336,15 @@ export type MessageWebhookContent = Pick<
 
 // // INTERFACES
 // // Internals
-// export interface JSONCache {
-//   [s: string]: unknown;
-// }
+export interface JSONCache {
+  [s: string]: unknown;
+}
 // export interface NestedJSON {
 //   toJSON(arg?: unknown, cache?: (string | unknown)[]): JSONCache;
 // }
-// export interface SimpleJSON {
-//   toJSON(props?: string[]): JSONCache;
-// }
+export interface SimpleJSON {
+  toJSON(props?: string[]): JSONCache;
+}
 
 // // Application Commands
 export interface ApplicationCommand<
@@ -1032,12 +1035,12 @@ export interface PartialEmoji {
 //   short: boolean;
 //   url: string;
 // }
-// export interface RequestMembersPromise {
-//   members: Member;
-//   received: number;
-//   res: (value: Member[]) => void;
-//   timeout: number;
-// }
+export interface RequestMembersPromise {
+  members: Member;
+  received: number;
+  res: (value: Member[]) => void;
+  timeout: number;
+}
 export interface ShardManagerOptions {
   concurrency?: number | "auto";
 }
@@ -1288,13 +1291,13 @@ export interface CreateInviteOptions {
 // }
 
 // // Member/User
-// export interface FetchMembersOptions {
-//   limit?: number;
-//   presences?: boolean;
-//   query?: string;
-//   timeout?: number;
-//   userIDs?: string[];
-// }
+export interface FetchMembersOptions {
+  limit?: number;
+  presences?: boolean;
+  query?: string;
+  timeout?: number;
+  userIDs?: string[];
+}
 export interface MemberOptions {
   channelID?: string | null;
   communicationDisabledUntil?: Date | null;
@@ -1318,10 +1321,10 @@ export interface PartialUser {
   id: string;
   username: string;
 }
-// export interface RequestGuildMembersOptions extends Omit<FetchMembersOptions, "userIDs"> {
-//   nonce: string;
-//   user_ids?: string[];
-// }
+export interface RequestGuildMembersOptions extends Omit<FetchMembersOptions, "userIDs"> {
+  nonce: string;
+  user_ids?: string[];
+}
 // export interface RequestGuildMembersReturn {
 //   members: Member[];
 //   received: number;
@@ -1480,39 +1483,39 @@ export interface URLButton extends ButtonBase {
 }
 
 // // Presence
-// export interface Activity<T extends ActivityType = ActivityType> extends ActivityPartial<T> {
-//   application_id?: string;
-//   assets?: {
-//     large_image?: string;
-//     large_text?: string;
-//     small_image?: string;
-//     small_text?: string;
-//     [key: string]: unknown;
-//   };
-//   created_at: number;
-//   details?: string;
-//   emoji?: { animated?: boolean; id?: string; name: string };
-//   flags?: number;
-//   instance?: boolean;
-//   party?: { id?: string; size?: [number, number] };
-//   secrets?: { join?: string; spectate?: string; match?: string };
-//   state?: string;
-//   timestamps?: { end?: number; start: number };
-//   type: T;
-//   // the stuff attached to this object apparently varies even more than documented, so...
-//   [key: string]: unknown;
-// }
-// export interface ActivityPartial<T extends ActivityType = BotActivityType> {
-//   name: string;
-//   export type?: T;
-//   url?: string;
-// }
-// export interface ClientPresence {
-//   activities: Activity[] | null;
-//   afk: boolean;
-//   since: number | null;
-//   status: SelfStatus;
-// }
+export interface Activity<T extends ActivityType = ActivityType> extends ActivityPartial<T> {
+  application_id?: string;
+  assets?: {
+    large_image?: string;
+    large_text?: string;
+    small_image?: string;
+    small_text?: string;
+    [key: string]: unknown;
+  };
+  created_at: number;
+  details?: string;
+  emoji?: { animated?: boolean; id?: string; name: string };
+  flags?: number;
+  instance?: boolean;
+  party?: { id?: string; size?: [number, number] };
+  secrets?: { join?: string; spectate?: string; match?: string };
+  state?: string;
+  timestamps?: { end?: number; start: number };
+  type: T;
+  // the stuff attached to this object apparently varies even more than documented, so...
+  [key: string]: unknown;
+}
+export interface ActivityPartial<T extends ActivityType = BotActivityType> {
+  name: string;
+  type?: T;
+  url?: string;
+}
+export interface ClientPresence {
+  activities: Activity[] | null;
+  afk: boolean;
+  since: number | null;
+  status: SelfStatus;
+}
 // export interface ClientStatus {
 //   desktop: UserStatus;
 //   mobile: UserStatus;
