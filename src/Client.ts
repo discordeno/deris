@@ -1,4 +1,5 @@
 import {
+  API_VERSION,
   delay,
   getBotIdFromToken,
   iconBigintToHash,
@@ -112,6 +113,7 @@ import {
   WEBHOOK_TOKEN,
   WEBHOOK_TOKEN_SLACK,
 } from "./Endpoints.js";
+import ShardManager from "./gateway/ShardManager.js";
 import RequestHandler from "./RequestHandler.js";
 import CategoryChannel from "./Structures/CategoryChannel.js";
 import Channel from "./Structures/Channel.js";
@@ -223,6 +225,10 @@ export class Client extends EventEmitter {
 
   /** Rest handler */
   requestHandler: RequestHandler;
+  /** Gateway manager */
+  shards: ShardManager;
+  /** The gateway url to connect to. */
+  gatewayURL: string = "";
   /** Whether or not the client is fully ready. */
   ready = false;
 
@@ -239,12 +245,20 @@ export class Client extends EventEmitter {
       applicationId: options.applicationId,
       messageLimit: options.messageLimit,
       seedVoiceConnections: options.seedVoiceConnections ?? true,
+      shardConcurrency: options.shardConcurrency ?? 1,
     };
     this.token = token;
 
     this.requestHandler = new RequestHandler(this, {});
     // NO PROXY REST START ALARMS
     if (!this.proxyURL) this.requestHandler.warnUser();
+
+    this.shards = new ShardManager(this, {
+      concurrency:
+        typeof this.options.shardConcurrency === "number"
+          ? this.options.shardConcurrency
+          : undefined,
+    });
   }
 
   /** The amount of time in milliseconds that this client has been online for. */
@@ -301,6 +315,78 @@ export class Client extends EventEmitter {
 
   get privateChannelMap(): Record<string, BigString> {
     return this._privateChannelMap.toRecord();
+  }
+
+  /** Tells all shards to connect. This will call `getBotGateway()`, which is ratelimited. */
+  async connect(): Promise<void> {
+    if (typeof this.token !== "string")
+      throw new Error(`Invalid token "${this.token}"`);
+
+    try {
+      const data = await (this.options.maxShards === "auto" ||
+      this.options.shardConcurrency === "auto"
+        ? this.getBotGateway()
+        : this.getGateway());
+
+      if (!data.url || (this.options.maxShards === "auto" && !data.shards)) {
+        throw new Error("Invalid response from gateway REST call");
+      }
+
+      if (data.url.includes("?")) {
+        data.url = data.url.substring(0, data.url.indexOf("?"));
+      }
+      if (!data.url.endsWith("/")) {
+        data.url += "/";
+      }
+      this.gatewayURL = `${data.url}?v=${API_VERSION}&encoding=${"json"}`;
+
+      if (this.options.compress) {
+        this.gatewayURL += "&compress=zlib-stream";
+      }
+
+      if (this.options.maxShards === "auto") {
+        if (!data.shards) {
+          throw new Error(
+            "Failed to autoshard due to lack of data from Discord."
+          );
+        }
+        this.options.maxShards = data.shards;
+        if (this.options.lastShardID === undefined) {
+          this.options.lastShardID = data.shards - 1;
+        }
+      }
+
+      if (
+        this.options.shardConcurrency === "auto" &&
+        data.session_start_limit &&
+        typeof data.session_start_limit.max_concurrency === "number"
+      ) {
+        this.shards.setConcurrency(data.session_start_limit.max_concurrency);
+      }
+
+      for (
+        let i = this.options.firstShardID;
+        i <= this.options.lastShardID;
+        ++i
+      ) {
+        this.shards.spawn(i);
+      }
+    } catch (err) {
+      if (!this.options.autoreconnect) {
+        throw err;
+      }
+
+      const reconnectDelay = this.options.reconnectDelay(
+        this.lastReconnectDelay,
+        this.reconnectAttempts
+      );
+
+      await sleep(reconnectDelay);
+      this.lastReconnectDelay = reconnectDelay;
+      this.reconnectAttempts = this.reconnectAttempts + 1;
+      
+      return this.connect();
+    }
   }
 
   /** Make a request to the discord api. */
@@ -717,7 +803,7 @@ export class Client extends EventEmitter {
     }).then((template) => new GuildTemplate(template, this));
   }
 
-  /** 
+  /**
    * Respond to the interaction with a message
    * Note: Use webhooks if you have already responded with an interaction response.
    */
@@ -849,12 +935,14 @@ export class Client extends EventEmitter {
     messageID: BigString,
     options: CreateThreadOptions
   ): Promise<NewsThreadChannel | PublicThreadChannel> {
-    return await this.post(THREAD_WITH_MESSAGE(channelID, messageID), {
+    return (await this.post(THREAD_WITH_MESSAGE(channelID, messageID), {
       body: {
         name: options.name,
         auto_archive_duration: options.autoArchiveDuration,
       },
-    }).then((channel) => Channel.from(channel, this)) as (NewsThreadChannel | PublicThreadChannel);
+    }).then((channel) => Channel.from(channel, this))) as
+      | NewsThreadChannel
+      | PublicThreadChannel;
   }
 
   /** Create a thread without an existing message */
@@ -862,14 +950,14 @@ export class Client extends EventEmitter {
     channelID: BigString,
     options: CreateThreadWithoutMessageOptions
   ): Promise<PrivateThreadChannel> {
-    return await this.post(THREAD_WITHOUT_MESSAGE(channelID), {
+    return (await this.post(THREAD_WITHOUT_MESSAGE(channelID), {
       body: {
         auto_archive_duration: options.autoArchiveDuration,
         invitable: options.invitable,
         name: options.name,
         type: options.type,
       },
-    }).then((channel) => Channel.from(channel, this)) as PrivateThreadChannel;
+    }).then((channel) => Channel.from(channel, this))) as PrivateThreadChannel;
   }
 
   /** Crosspost (publish) a message to subscribed channels */
@@ -1062,7 +1150,7 @@ export class Client extends EventEmitter {
     options: EditChannelOptions,
     reason?: string
   ): Promise<AnyGuildChannel> {
-    return await this.patch(CHANNEL(channelID), {
+    return (await this.patch(CHANNEL(channelID), {
       reason,
       body: {
         archived: options.archived,
@@ -1084,7 +1172,7 @@ export class Client extends EventEmitter {
         video_quality_mode: options.videoQualityMode,
         permission_overwrites: options.permissionOverwrites,
       },
-    }).then((channel) => Channel.from(channel, this)) as AnyGuildChannel;
+    }).then((channel) => Channel.from(channel, this))) as AnyGuildChannel;
   }
 
   /** Create a channel permission overwrite */
@@ -2203,9 +2291,9 @@ export class Client extends EventEmitter {
 
   /** Get a channel's data via the REST API. */
   async getRESTChannel(channelID: BigString): Promise<AnyChannel> {
-    return await this.get(CHANNEL(channelID)).then((channel: DiscordChannel) =>
+    return (await this.get(CHANNEL(channelID)).then((channel: DiscordChannel) =>
       Channel.from(channel, this)
-    ) as AnyChannel;
+    )) as AnyChannel;
   }
 
   /** Get a guild's data via the REST API. */
@@ -2768,6 +2856,8 @@ export interface ClientOptions {
   applicationId: BigString;
   /** Whether or not to seed voice connections. */
   seedVoiceConnections: boolean;
+  /** The concurrency to use when starting the bot. */
+  shardConcurrency?: number;
 }
 
 export interface ParsedClientOptions {
@@ -2789,6 +2879,8 @@ export interface ParsedClientOptions {
   messageLimit?: number;
   /** Whether or not to seed voice connections */
   seedVoiceConnections: boolean;
+  /** The max concurrency for the bot */
+  shardConcurrency: number;
 }
 
 // TODO: Switch bigstring to dd version in next dd release.
