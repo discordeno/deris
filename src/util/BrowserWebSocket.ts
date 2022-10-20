@@ -30,7 +30,7 @@ class BrowserWebSocketError extends Error {
  * @prop {String} url The URL to connect to
  */
 class BrowserWebSocket extends EventEmitter {
-    private _ws: WebSocket;
+    _ws: WebSocket;
 
     constructor(url: string) {
         super();
@@ -66,7 +66,7 @@ class BrowserWebSocket extends EventEmitter {
         return this._ws.close();
     }
 
-    async _onMessage(event) {
+    async _onMessage(event: MessageEvent<any>) {
         if (event.data instanceof window.Blob) {
             this.emit('message', await event.data.arrayBuffer());
         } else {
