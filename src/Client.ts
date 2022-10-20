@@ -27,7 +27,6 @@ import {
 import { EventEmitter } from "events";
 import { Base } from "./Base.js";
 import Collection from "./Collection.js";
-
 import {
   CHANNEL,
   CHANNEL_BULK_DELETE,
@@ -138,6 +137,7 @@ import StageInstance from "./Structures/StageInstance.js";
 import TextChannel from "./Structures/TextChannel.js";
 import TextVoiceChannel from "./Structures/TextVoiceChannel.js";
 import ThreadMember from "./Structures/ThreadMember.js";
+import UnavailableGuild from "./Structures/UnavailableGuild.js";
 import User from "./Structures/User.js";
 import {
   AllowedMentions,
@@ -217,13 +217,16 @@ export class Client extends EventEmitter {
   CLIENT_URL = "https://discord.com";
 
   guilds = new Collection<BigString, Guild>();
+  unavailableGuilds = new Collection<BigString, UnavailableGuild>();
   users = new Collection<BigString, User>();
   _channelGuildMap = new Collection<BigString, BigString>();
   _threadGuildMap = new Collection<BigString, BigString>();
   _privateChannelMap = new Collection<BigString, BigString>();
   privateChannels = new Collection<BigString, PrivateChannel>();
 
-  /** Rest handler */
+  guildShardMap: Record<string, number>;
+  shards: ShardManager;
+
   requestHandler: RequestHandler;
   /** Gateway manager */
   shards: ShardManager;
@@ -247,9 +250,18 @@ export class Client extends EventEmitter {
       seedVoiceConnections: options.seedVoiceConnections ?? true,
       shardConcurrency: options.shardConcurrency ?? 1,
     };
+    
     this.token = token;
 
+    this.guildShardMap = {};
     this.requestHandler = new RequestHandler(this, {});
+
+    const shardManagerOptions = {};
+    if(typeof this.options.shardConcurrency === "number") {
+        shardManagerOptions.concurrency = this.options.shardConcurrency;
+    }
+    this.shards = new ShardManager(this, shardManagerOptions);
+    
     // NO PROXY REST START ALARMS
     if (!this.proxyURL) this.requestHandler.warnUser();
 
@@ -2788,6 +2800,7 @@ export class Client extends EventEmitter {
   }
 
   toJSON(props: string[] = []) {
+    // TODO: Update this after Client is done
     return Base.prototype.toJSON.call(this, [
       "application",
       "bot",

@@ -107,7 +107,7 @@ export class Collection<K, V> extends Map<K, V> {
       return obj;
     }
   
-    remove(obj: V & { id: K }): V | undefined {
+    remove(obj: { id: K }): V | undefined {
       const item = this.get(obj.id);
       if (!item) return;
   
@@ -118,7 +118,8 @@ export class Collection<K, V> extends Map<K, V> {
     update(obj: V & { id: K }, extra?: unknown, replace?: boolean): V {
       const item = this.get(obj.id);
       if (!item) {
-        return this.add(obj, extra, replace);
+        this.set(obj.id, obj);
+        return obj;
       }
   
       // @ts-ignore some eris magic at play here
