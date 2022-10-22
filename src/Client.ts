@@ -387,7 +387,7 @@ export class Client extends EventEmitter {
         this.reconnectAttempts
       );
 
-      await sleep(reconnectDelay);
+      await delay(reconnectDelay);
       this.lastReconnectDelay = reconnectDelay;
       this.reconnectAttempts = this.reconnectAttempts + 1;
 

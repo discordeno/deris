@@ -126,6 +126,9 @@ export class Shard extends EventEmitter {
     this.hardReset();
   }
 
+  /**
+   * @deprecated Use .token instead.
+   */
   get _token(): string {
     return this.token;
   }
@@ -136,26 +139,8 @@ export class Shard extends EventEmitter {
 
   checkReady() {
     if (!this.ready) {
-      // TODO: remove i think its self bot thing
-      if (this.guildSyncQueue.length > 0) {
-        // this.requestGuildSync(this.guildSyncQueue);
-        this.guildSyncQueue = [];
-        this.guildSyncQueueLength = 1;
-        return;
-      }
-      if (this.unsyncedGuilds > 0) {
-        return;
-      }
-      if (this.getAllUsersQueue.length > 0) {
-        this.requestGuildMembers(this.getAllUsersQueue);
-        this.getAllUsersQueue = [];
-        this.getAllUsersLength = 1;
-        return;
-      }
-      if (Object.keys(this.getAllUsersCount).length === 0) {
-        this.ready = true;
-        super.emit("ready");
-      }
+      this.ready = true;
+      super.emit("ready");
     }
   }
 
@@ -174,12 +159,6 @@ export class Shard extends EventEmitter {
     this.client.guildShardMap[guild.id] = this.id;
     this.client.guilds.set(guild.id, guild);
 
-    // TODO: decide whether to support getAllUsers
-    // if (this.client.options.getAllUsers && guild.members.size < (guild.memberCount || 0)) {
-    //     this.getGuildMembers(guild.id, {
-    //         presences: this.client.options.intents && this.client.options.intents & Intents.GuildPresences,
-    //     });
-    // }
     return guild;
   }
 
@@ -269,7 +248,6 @@ export class Shard extends EventEmitter {
 
   /**
    * Update the bot's AFK status.
-   * @arg {Boolean} afk Whether the bot user is AFK or not
    */
   editAFK(afk: boolean) {
     this.presence.afk = !!afk;
@@ -279,11 +257,6 @@ export class Shard extends EventEmitter {
 
   /**
    * Updates the bot's status on all guilds the shard is in
-   * @arg {String} [status] Sets the bot's status, either "online", "idle", "dnd", or "invisible"
-   * @arg {Array | Object} [activities] Sets the bot's activities. A single activity object is also accepted for backwards compatibility
-   * @arg {String} activities[].name The name of the activity
-   * @arg {Number} activities[].type The type of the activity. 0 is playing, 1 is streaming (Twitch only), 2 is listening, 3 is watching, 5 is competing in
-   * @arg {String} [activities[].url] The URL of the activity
    */
   editStatus(
     status: SelfStatus,
@@ -409,14 +382,17 @@ export class Shard extends EventEmitter {
         browser: "Eris",
         device: "Eris",
       },
-      shard: this.client.options.maxShards > 1 ? [this.id, this.client.options.maxShards] : undefined,
+      shard:
+        this.client.options.maxShards > 1
+          ? [this.id, this.client.options.maxShards]
+          : undefined,
       presence: this.presence.status ? this.presence : undefined,
     };
     this.sendWS(GatewayOpcodes.Identify, identify);
   }
 
   initializeWS() {
-    if (!this._token) {
+    if (!this.token) {
       return this.disconnect(null, new Error("Token not specified"));
     }
 
@@ -511,7 +487,7 @@ export class Shard extends EventEmitter {
           // Cannot heartbeat when resuming, discord/discord-api-docs#1619
           this.heartbeat();
         }
-        
+
         this.emit("hello", packet.d._trace, this.id);
         break; /* eslint-enable no-unreachable */
       }
@@ -703,7 +679,7 @@ export class Shard extends EventEmitter {
             this.emit("userUpdate", user, oldUser);
           }
         }
-        
+
         const guild = this.client.guilds.get(packet.d.guild_id);
         if (!guild) {
           this.emit(
@@ -734,7 +710,7 @@ export class Shard extends EventEmitter {
         };
 
         // (╯°□°）╯︵ ┻━┻
-        if (packet.d.guild_id && packet.d.user_id === this.client.user.id) {
+        if (packet.d.guild_id && packet.d.user_id === this.client.id) {
           const voiceConnection = this.client.voiceConnections.get(
             packet.d.guild_id
           );
@@ -922,7 +898,7 @@ export class Shard extends EventEmitter {
         if (channel) {
           // MESSAGE_CREATE just when deleting o.o
           channel.lastMessageID = packet.d.id;
-          
+
           this.emit(
             "messageCreate",
             channel.messages.add(new Message(packet.d, this.client))
@@ -1064,13 +1040,13 @@ export class Shard extends EventEmitter {
             : packet.d.emoji.name!;
           if (message.reactions[reaction]) {
             ++message.reactions[reaction].count;
-            if (packet.d.user_id === this.client.user.id) {
+            if (packet.d.user_id === this.client.id) {
               message.reactions[reaction].me = true;
             }
           } else {
             message.reactions[reaction] = {
               count: 1,
-              me: packet.d.user_id === this.client.user.id,
+              me: packet.d.user_id === this.client.id,
             };
           }
         } else {
@@ -1122,7 +1098,7 @@ export class Shard extends EventEmitter {
             --reactionObj.count;
             if (reactionObj.count === 0) {
               delete message.reactions[reaction];
-            } else if (packet.d.user_id === this.client.user.id) {
+            } else if (packet.d.user_id === this.client.id) {
               reactionObj.me = false;
             }
           }
@@ -1139,7 +1115,7 @@ export class Shard extends EventEmitter {
             }
           }
         }
-        
+
         this.emit(
           "messageReactionRemove",
           message,
@@ -1175,7 +1151,7 @@ export class Shard extends EventEmitter {
             }
           }
         }
-       
+
         this.emit("messageReactionRemoveAll", message);
         break;
       }
@@ -1209,7 +1185,7 @@ export class Shard extends EventEmitter {
             }
           }
         }
-        
+
         this.emit("messageReactionRemoveEmoji", message, packet.d.emoji);
         break;
       }
@@ -1230,7 +1206,7 @@ export class Shard extends EventEmitter {
         packet.d.id = packet.d.user.id;
         let x: number | undefined;
         guild.memberCount = (guild.memberCount || 0) + 1;
-        
+
         this.emit(
           "guildMemberAdd",
           guild,
@@ -1290,7 +1266,7 @@ export class Shard extends EventEmitter {
           };
         }
         member = guild.members.update(new Member(packet.d, guild, this.client));
-        
+
         this.emit("guildMemberUpdate", guild, member, oldMember);
         break;
       }
@@ -1299,7 +1275,7 @@ export class Shard extends EventEmitter {
           d: DiscordGuildMemberRemove;
         };
 
-        if (packet.d.user.id === this.client.user.id) {
+        if (packet.d.user.id === this.client.id) {
           // The bot is probably leaving
           break;
         }
@@ -1309,7 +1285,7 @@ export class Shard extends EventEmitter {
         }
         guild.memberCount = (guild.memberCount || 0) - 1;
         packet.d.id = packet.d.user.id;
-        
+
         this.emit(
           "guildMemberRemove",
           guild,
@@ -1333,10 +1309,8 @@ export class Shard extends EventEmitter {
                 new Guild(packet.d, this.client)
               )
             ) {
-              
               this.emit("guildAvailable", guild);
             } else {
-              
               this.emit("guildCreate", guild);
             }
           } else {
@@ -1347,7 +1321,7 @@ export class Shard extends EventEmitter {
           }
         } else {
           this.client.guilds.remove(new Guild(packet.d, this.client));
-          
+
           this.emit(
             "unavailableGuildCreate",
             this.client.unavailableGuilds.add(
@@ -1398,7 +1372,7 @@ export class Shard extends EventEmitter {
           vanityURL: guild.vanityURL,
           verificationLevel: guild.verificationLevel,
         };
-       
+
         this.emit(
           "guildUpdate",
           this.client.guilds.update(new Guild(packet.d, this.client)),
@@ -1429,7 +1403,6 @@ export class Shard extends EventEmitter {
           });
         }
         if (packet.d.unavailable) {
-          
           this.emit(
             "guildUnavailable",
             this.client.unavailableGuilds.add(
@@ -1437,7 +1410,6 @@ export class Shard extends EventEmitter {
             )
           );
         } else {
-          
           this.emit(
             "guildDelete",
             guild || {
@@ -1452,7 +1424,6 @@ export class Shard extends EventEmitter {
           d: DiscordGuildBanAddRemove;
         };
 
-        
         this.emit(
           "guildBanAdd",
           this.client.guilds.get(packet.d.guild_id),
@@ -1465,7 +1436,6 @@ export class Shard extends EventEmitter {
           d: DiscordGuildBanAddRemove;
         };
 
-        
         this.emit(
           "guildBanRemove",
           this.client.guilds.get(packet.d.guild_id),
@@ -1478,7 +1448,6 @@ export class Shard extends EventEmitter {
           d: DiscordGuildRoleCreate;
         };
 
-      
         const guild = this.client.guilds.get(packet.d.guild_id);
         if (!guild) {
           this.emit(
@@ -1527,7 +1496,7 @@ export class Shard extends EventEmitter {
           tags: role.tags,
           unicodeEmoji: role.unicodeEmoji,
         };
-       
+
         this.emit(
           "guildRoleUpdate",
           guild,
@@ -1541,7 +1510,6 @@ export class Shard extends EventEmitter {
           d: DiscordGuildRoleDelete;
         };
 
-       
         const guild = this.client.guilds.get(packet.d.guild_id);
         if (!guild) {
           this.emit(
@@ -1585,7 +1553,7 @@ export class Shard extends EventEmitter {
           );
           break;
         }
-        
+
         this.emit(
           "inviteCreate",
           guild,
@@ -1621,7 +1589,7 @@ export class Shard extends EventEmitter {
           );
           break;
         }
-       
+
         this.emit(
           "inviteDelete",
           guild,
@@ -1655,7 +1623,7 @@ export class Shard extends EventEmitter {
           }
           channel.guild.channels.add(channel, this.client);
           this.client.channelGuildMap[packet.d.id] = packet.d.guild_id;
-          
+
           this.emit("channelCreate", channel);
         } else {
           this.emit(
@@ -1742,7 +1710,6 @@ export class Shard extends EventEmitter {
           channel = newChannel;
         }
 
-        
         this.emit("channelUpdate", channel, oldChannel);
         break;
       }
@@ -1758,7 +1725,7 @@ export class Shard extends EventEmitter {
             );
             if (channel) {
               delete this.client.privateChannelMap[channel.recipient?.id || ""];
-              
+
               this.emit("channelDelete", channel);
             }
           }
@@ -1853,7 +1820,6 @@ export class Shard extends EventEmitter {
           }
         }
 
-        
         this.emit("guildMemberChunk", guild, members);
 
         this.lastHeartbeatAck = true;
@@ -1920,26 +1886,10 @@ export class Shard extends EventEmitter {
           }
         });
 
-        packet.d.private_channels.forEach((channel) => {
-          if (channel.type === undefined || channel.type === ChannelTypes.DM) {
-            this.client.privateChannelMap[channel.recipients[0].id] =
-              channel.id;
-            this.client.privateChannels.add(channel, this.client, true);
-          } else {
-            this.emit(
-              "warn",
-              new Error(
-                "Unhandled READY private_channel type: " +
-                  JSON.stringify(channel, null, 2)
-              )
-            );
-          }
-        });
-
         this.client.application = packet.d.application;
 
         this.preReady = true;
-        
+
         this.emit("shardPreReady", this.id);
 
         if (
@@ -1959,7 +1909,7 @@ export class Shard extends EventEmitter {
         };
 
         packet.d.session_id = this.sessionID;
-        packet.d.user_id = this.client.user.id;
+        packet.d.user_id = this.client.id;
         packet.d.shard = this;
 
         this.client.voiceConnections.voiceServerUpdate(packet.d);
@@ -1997,7 +1947,7 @@ export class Shard extends EventEmitter {
           guild.update(packet.d);
           emojis = guild.emojis;
         }
-        
+
         this.emit(
           "guildEmojisUpdate",
           guild || { id: packet.d.guild_id },
@@ -2039,7 +1989,7 @@ export class Shard extends EventEmitter {
         channel.lastPinTimestamp = Date.parse(
           packet.d.last_pin_timestamp || ""
         );
-        
+
         this.emit(
           "channelPinUpdate",
           channel,
@@ -2053,7 +2003,6 @@ export class Shard extends EventEmitter {
           d: DiscordWebhookUpdate;
         };
 
-        
         this.emit("webhooksUpdate", {
           channelID: packet.d.channel_id,
           guildID: packet.d.guild_id,
@@ -2078,7 +2027,7 @@ export class Shard extends EventEmitter {
         }
         channel.guild.threads.add(channel, this.client);
         this.client.threadGuildMap[packet.d.id] = packet.d.guild_id || "";
-       
+
         this.emit("threadCreate", channel);
         break;
       }
@@ -2114,7 +2063,6 @@ export class Shard extends EventEmitter {
         };
         channel.update(packet.d);
 
-       
         this.emit("threadUpdate", channel, oldChannel);
         break;
       }
@@ -2137,7 +2085,7 @@ export class Shard extends EventEmitter {
         if (!channel) {
           break;
         }
-        
+
         this.emit("threadDelete", channel);
         break;
       }
@@ -2165,7 +2113,7 @@ export class Shard extends EventEmitter {
         const joinedThreadsMember = packet.d.members.map((m) =>
           guild.threads.get(m.id)?.members.update(m, this.client)
         );
-        
+
         this.emit(
           "threadListSync",
           guild,
@@ -2238,7 +2186,7 @@ export class Shard extends EventEmitter {
             (id) => channel.members.remove({ id }) || { id }
           );
         }
-        
+
         this.emit(
           "threadMembersUpdate",
           channel,
@@ -2260,7 +2208,7 @@ export class Shard extends EventEmitter {
           );
           break;
         }
-        
+
         this.emit(
           "stageInstanceCreate",
           guild.stageInstances.add(new StageInstance(packet.d, this.client))
@@ -2284,7 +2232,7 @@ export class Shard extends EventEmitter {
             topic: stageInstance.topic,
           };
         }
-       
+
         this.emit(
           "stageInstanceUpdate",
           guild.stageInstances.update(new StageInstance(packet.d, this.client)),
@@ -2305,7 +2253,7 @@ export class Shard extends EventEmitter {
           );
           break;
         }
-        
+
         this.emit(
           "stageInstanceDelete",
           guild.stageInstances.remove(packet.d) ||
@@ -2332,7 +2280,9 @@ export class Shard extends EventEmitter {
     } /* eslint-enable no-redeclare */
   }
 
-  _onWSClose(code: number, reason: string) {
+  _onWSClose(event: { code: number; reason: string }) {
+    let { code, reason } = event;
+
     reason = reason.toString();
     this.emit(
       "debug",
@@ -2363,7 +2313,7 @@ export class Shard extends EventEmitter {
         err = new Error("Authentication failed");
         this.sessionID = null;
         reconnect = false;
-        this.emit("error", new Error(`Invalid token: ${this._token}`));
+        this.emit("error", new Error(`Invalid token: ${this.token}`));
       } else if (code === 4005) {
         err = new Error("Already authenticated");
       } else if (code === 4006 || code === 4009) {
