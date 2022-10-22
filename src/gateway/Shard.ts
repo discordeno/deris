@@ -703,25 +703,7 @@ export class Shard extends EventEmitter {
             this.emit("userUpdate", user, oldUser);
           }
         }
-        if (!packet.d.guild_id) {
-          packet.d.id = packet.d.user.id;
-          const relationship = this.client.relationships.get(packet.d.id);
-          if (!relationship) {
-            // Removing relationships
-            break;
-          }
-          const oldPresence = {
-            activities: relationship.activities,
-            status: relationship.status,
-          };
-          
-          this.emit(
-            "presenceUpdate",
-            this.client.relationships.update(packet.d),
-            oldPresence
-          );
-          break;
-        }
+        
         const guild = this.client.guilds.get(packet.d.guild_id);
         if (!guild) {
           this.emit(
@@ -1943,8 +1925,6 @@ export class Shard extends EventEmitter {
             this.client.privateChannelMap[channel.recipients[0].id] =
               channel.id;
             this.client.privateChannels.add(channel, this.client, true);
-          } else if (channel.type === ChannelTypes.GROUP_DM) {
-            this.client.groupChannels.add(channel, this.client, true);
           } else {
             this.emit(
               "warn",
@@ -1955,22 +1935,6 @@ export class Shard extends EventEmitter {
             );
           }
         });
-
-        if (packet.d.relationships) {
-          packet.d.relationships.forEach((relationship) => {
-            this.client.relationships.add(relationship, this.client, true);
-          });
-        }
-
-        if (packet.d.presences) {
-          packet.d.presences.forEach((presence) => {
-            if (this.client.relationships.get(presence.user.id)) {
-              // Avoid DM channel presences which are also in here
-              presence.id = presence.user.id;
-              this.client.relationships.update(presence, null, true);
-            }
-          });
-        }
 
         this.client.application = packet.d.application;
 
