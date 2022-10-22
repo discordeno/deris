@@ -22,6 +22,7 @@ import {
   DiscordTemplate,
   DiscordThreadMember,
   DiscordUser,
+  Intents,
   OverwriteTypes,
 } from "discordeno/types";
 import { EventEmitter } from "events";
@@ -225,10 +226,10 @@ export class Client extends EventEmitter {
   privateChannels = new Collection<BigString, PrivateChannel>();
 
   guildShardMap: Record<string, number>;
-  shards: ShardManager;
 
+  /** Rest manager. Not recommended. */
   requestHandler: RequestHandler;
-  /** Gateway manager */
+  /** Gateway manager. Not recommended */
   shards: ShardManager;
   /** The gateway url to connect to. */
   gatewayURL: string = "";
@@ -248,20 +249,24 @@ export class Client extends EventEmitter {
       applicationId: options.applicationId,
       messageLimit: options.messageLimit,
       seedVoiceConnections: options.seedVoiceConnections ?? true,
-      shardConcurrency: options.shardConcurrency ?? 1,
+      shardConcurrency: options.shardConcurrency ?? "auto",
+      maxShards: options.maxShards ?? "auto",
+      compress: false,
+      // compress: options.compress ?? false,
+      lastShardID: options.lastShardID,
+      maxResumeAttempts: options.maxResumeAttempts ?? Infinity,
+      intents: options.intents ?? 0,
     };
-    
+
     this.token = token;
 
     this.guildShardMap = {};
     this.requestHandler = new RequestHandler(this, {});
 
-    const shardManagerOptions = {};
-    if(typeof this.options.shardConcurrency === "number") {
-        shardManagerOptions.concurrency = this.options.shardConcurrency;
-    }
-    this.shards = new ShardManager(this, shardManagerOptions);
-    
+    this.shards = new ShardManager(this, {
+      concurrency: this.options.shardConcurrency,
+    });
+
     // NO PROXY REST START ALARMS
     if (!this.proxyURL) this.requestHandler.warnUser();
 
@@ -335,14 +340,7 @@ export class Client extends EventEmitter {
       throw new Error(`Invalid token "${this.token}"`);
 
     try {
-      const data = await (this.options.maxShards === "auto" ||
-      this.options.shardConcurrency === "auto"
-        ? this.getBotGateway()
-        : this.getGateway());
-
-      if (!data.url || (this.options.maxShards === "auto" && !data.shards)) {
-        throw new Error("Invalid response from gateway REST call");
-      }
+      const data = await this.getBotGateway();
 
       if (data.url.includes("?")) {
         data.url = data.url.substring(0, data.url.indexOf("?"));
@@ -357,11 +355,6 @@ export class Client extends EventEmitter {
       }
 
       if (this.options.maxShards === "auto") {
-        if (!data.shards) {
-          throw new Error(
-            "Failed to autoshard due to lack of data from Discord."
-          );
-        }
         this.options.maxShards = data.shards;
         if (this.options.lastShardID === undefined) {
           this.options.lastShardID = data.shards - 1;
@@ -396,7 +389,7 @@ export class Client extends EventEmitter {
       await sleep(reconnectDelay);
       this.lastReconnectDelay = reconnectDelay;
       this.reconnectAttempts = this.reconnectAttempts + 1;
-      
+
       return this.connect();
     }
   }
@@ -2870,7 +2863,15 @@ export interface ClientOptions {
   /** Whether or not to seed voice connections. */
   seedVoiceConnections: boolean;
   /** The concurrency to use when starting the bot. */
-  shardConcurrency?: number;
+  shardConcurrency?: "auto" | number;
+  /** How many shards to use max. */
+  maxShards?: "auto" | number;
+  /** Whether or not to enable websocket compression. NOT REcOMMENDED. */
+  compress?: boolean;
+  /** The last shard id to use. */
+  lastShardID?: number;
+  /** How many times to attempt resuming. */
+  maxResumeAttempts?: number;
 }
 
 export interface ParsedClientOptions {
@@ -2893,7 +2894,17 @@ export interface ParsedClientOptions {
   /** Whether or not to seed voice connections */
   seedVoiceConnections: boolean;
   /** The max concurrency for the bot */
-  shardConcurrency: number;
+  shardConcurrency: "auto" | number;
+  /** How many shards to use as max */
+  maxShards: "auto" | number;
+  /** Whether or not to enable websocket compression. NOT REcOMMENDED. */
+  compress: boolean;
+  /** The last shard id to use. */
+  lastShardID?: number;
+  /** How many times to attempt resuming. */
+  maxResumeAttempts: number;
+  /** The intents to use when connection to gateway. */
+  intents: Intents;
 }
 
 // TODO: Switch bigstring to dd version in next dd release.
