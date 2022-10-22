@@ -22,6 +22,7 @@ import {
   DiscordTemplate,
   DiscordThreadMember,
   DiscordUser,
+  GatewayIntents,
   Intents,
   OverwriteTypes,
 } from "discordeno/types";
@@ -2872,6 +2873,8 @@ export interface ClientOptions {
   lastShardID?: number;
   /** How many times to attempt resuming. */
   maxResumeAttempts?: number;
+  /** The intents to use when connection to gateway. */
+  intents?: GatewayIntents;
 }
 
 export interface ParsedClientOptions {
@@ -2904,7 +2907,7 @@ export interface ParsedClientOptions {
   /** How many times to attempt resuming. */
   maxResumeAttempts: number;
   /** The intents to use when connection to gateway. */
-  intents: Intents;
+  intents: GatewayIntents;
 }
 
 // TODO: Switch bigstring to dd version in next dd release.
