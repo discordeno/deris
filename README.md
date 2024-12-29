@@ -1,6 +1,12 @@
 # School
 
-A Eris like framework on top of discordeno.
+A drop in replacement for Eris for bot's looking to migrate to discordeno. The public api usage is similar copy to Eris but behind the scenes it uses discordeno.
+
+## Usage (WARNING THIS FRAMEWORK DOESN'T WORK YET, THIS IS JUST THE PLAN TO MAKE USAGE POSSIBLE)
+
+```bash
+npm i @discordeno/deris && npm uninstall eris
+```
 
 ## Warning
 
